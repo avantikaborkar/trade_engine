@@ -1,4 +1,4 @@
-#include "order_book.h"
+#include "order/order_book.h"
 #include <iostream>
 
 void OrderBook::addOrder(const Order& order) {
@@ -71,7 +71,7 @@ void OrderBook::cancelOrder(int orderId) {
 
 void OrderBook::printBook() {
 
-    std::cout << "\n--- BUY BOOK ---\n";
+    std::cout << "\nBUY BOOK\n";
 
     for(auto& pair : buyBook) {
 
@@ -80,14 +80,11 @@ void OrderBook::printBook() {
 
         for(auto& order : orders) {
 
-            std::cout << order.quantity
-                      << " @ "
-                      << price
-                      << "\n";
+            std::cout << order.quantity<< " @ "<< "$" << price<< "\n";
         }
     }
 
-    std::cout << "\n--- SELL BOOK ---\n";
+    std::cout << "\nSELL BOOK\n";
 
     for(auto& pair : sellBook) {
 
@@ -96,10 +93,7 @@ void OrderBook::printBook() {
 
         for(auto& order : orders) {
 
-            std::cout << order.quantity
-                      << " @ "
-                      << price
-                      << "\n";
+            std::cout << order.quantity<< " @ "<< "$" << price<< "\n";
         }
     }
 }
