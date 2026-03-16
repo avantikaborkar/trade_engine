@@ -93,7 +93,7 @@ void OrderBook::printBook() {
 
         for(auto& order : orders) {
 
-            std::cout << order.quantity<< " @ "<< "$" << price<< "\n";
+            std::cout << order.quantity<< " @ "<< "$" <<price<< "\n";
         }
     }
 }
