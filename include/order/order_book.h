@@ -1,30 +1,37 @@
 #pragma once
-using namespace std;
+
 #include "order.h"
-#include <map>
+#include <vector>
 #include <list>
 #include <unordered_map>
 
 class OrderBook {
 
 private:
+    static const int MAX_PRICE = 10000;
 
-    // BUY side (highest price first)
-    map<int, std::list<Order>, std::greater<int>> buyBook;
+    std::vector<std::list<Order>> buyLevels;
+    std::vector<std::list<Order>> sellLevels;
 
-    // SELL side (lowest price first)
-    map<int, std::list<Order>> sellBook;
+    std::unordered_map<int, std::list<Order>::iterator> orderMap;
 
-    // orderId → iterator to order
-    unordered_map<int, std::list<Order>::iterator> orderMap;
-    int bestBid=-1;
-    int bestAsk=-1;
+    int bestBid;
+    int bestAsk;
 
 public:
+    OrderBook();
 
     void addOrder(const Order& order);
     void cancelOrder(int orderId);
+
+    int getBestBid() const;
+    int getBestAsk() const;
+
+    std::list<Order>& getBuyLevel(int price);
+    std::list<Order>& getSellLevel(int price);
+
+    void updateBestBid();
+    void updateBestAsk();
+
     void printBook();
-    int getBestBid() const { return bestBid; }
-    int getBestAsk() const { return bestAsk; }
 };
