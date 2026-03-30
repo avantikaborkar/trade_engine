@@ -1,17 +1,22 @@
 #pragma once
 
 #include "order/order_book.h"
+#include "queue/spsc_queue.h"
+#include <atomic>
 
 class MatchingEngine {
 
 private:
     OrderBook& orderBook;
+    SPSCQueue<Order>& queue;
+    std::atomic<bool> running;
 
 public:
-    MatchingEngine(OrderBook& ob);
+    MatchingEngine(OrderBook& ob, SPSCQueue<Order>& q);
 
-    void processOrder(const Order& order);
+    void start();
+    void stop();
 
 private:
-    void match();
+    void matchLoop();
 };

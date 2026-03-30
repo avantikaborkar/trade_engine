@@ -1,7 +1,7 @@
 #include "order/order_book.h"
 #include <iostream>
 
-OrderBook::OrderBook() : buyLevels(MAX_PRICE + 1),  sellLevels(MAX_PRICE + 1),  bestBid(-1),  bestAsk(-1) {}
+OrderBook::OrderBook() : buyLevels(MAX_PRICE + 1),sellLevels(MAX_PRICE + 1),bestBid(-1),bestAsk(-1) {}
 
 void OrderBook::addOrder(const Order& order) {
 
@@ -58,13 +58,8 @@ void OrderBook::cancelOrder(int orderId) {
     orderMap.erase(orderId);
 }
 
-int OrderBook::getBestBid() const {
-    return bestBid;
-}
-
-int OrderBook::getBestAsk() const {
-    return bestAsk;
-}
+int OrderBook::getBestBid() const { return bestBid; }
+int OrderBook::getBestAsk() const { return bestAsk; }
 
 std::list<Order>& OrderBook::getBuyLevel(int price) {
     return buyLevels[price];
@@ -88,24 +83,13 @@ void OrderBook::updateBestAsk() {
 
 void OrderBook::printBook() {
 
-    std::cout << "\nBUY SIDE\n";
-    for(int p = bestBid; p >= 0; --p) {
+    std::cout << "\nBUY\n";
+    for(int p = bestBid; p >= 0; --p)
         for(auto& o : buyLevels[p])
             std::cout << o.quantity << " @ " << p << "\n";
-    }
 
-    std::cout << "\nSELL SIDE\n";
-
-    bool hasOrders = false;
-
-    for(int p = bestAsk; p <= MAX_PRICE; ++p) {
-        for(auto& o : sellLevels[p]) {
-            hasOrders = true;
+    std::cout << "\nSELL\n";
+    for(int p = bestAsk; p <= MAX_PRICE; ++p)
+        for(auto& o : sellLevels[p])
             std::cout << o.quantity << " @ " << p << "\n";
-        }
-    }
-
-    if(!hasOrders) {
-        std::cout << "No sell orders\n";
-    }
 }

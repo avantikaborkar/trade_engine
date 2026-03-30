@@ -23,10 +23,8 @@ public:
 
     void addOrder(const Order& order);
     void cancelOrder(int orderId);
-
     int getBestBid() const;
     int getBestAsk() const;
-
     std::list<Order>& getBuyLevel(int price);
     std::list<Order>& getSellLevel(int price);
 

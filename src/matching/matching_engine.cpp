@@ -1,42 +1,55 @@
 #include "matching/matching_engine.h"
-#include "order/order_book.h"
 #include <iostream>
+#include <thread>
 #include <algorithm>
 
-MatchingEngine::MatchingEngine(OrderBook& ob) : orderBook(ob) {}
+MatchingEngine::MatchingEngine(OrderBook& ob, SPSCQueue<Order>& q)
+    : orderBook(ob), queue(q), running(true) {}
 
-void MatchingEngine::processOrder(const Order& order) {
-
-    orderBook.addOrder(order);
-
-    match();
+void MatchingEngine::start() {
+    std::thread(&MatchingEngine::matchLoop, this).detach();
 }
 
-void MatchingEngine::match() {
+void MatchingEngine::stop() {
+    running = false;
+}
 
-    while(orderBook.getBestBid() != -1 && orderBook.getBestAsk() != -1 && orderBook.getBestBid() >= orderBook.getBestAsk()) {
+void MatchingEngine::matchLoop() {
 
-        int bid = orderBook.getBestBid();
-        int ask = orderBook.getBestAsk();
+    Order order(0,0,0,Side::BUY);
 
-        auto& buyQ = orderBook.getBuyLevel(bid);
-        auto& sellQ = orderBook.getSellLevel(ask);
+    while(running) {
 
-        auto& buy = buyQ.front();
-        auto& sell = sellQ.front();
+        if(queue.pop(order)) {
 
-        int qty = std::min(buy.quantity, sell.quantity);
-        int price = ask;
+            orderBook.addOrder(order);
 
-        std::cout << "trade: " << qty << " @ " << price << "\n";
+            while(orderBook.getBestBid() != -1 &&
+                  orderBook.getBestAsk() != -1 &&
+                  orderBook.getBestBid() >= orderBook.getBestAsk()) {
 
-        buy.quantity -= qty;
-        sell.quantity -= qty;
+                int bid = orderBook.getBestBid();
+                int ask = orderBook.getBestAsk();
 
-        if(buy.quantity == 0)
-            orderBook.cancelOrder(buy.orderId);
+                auto& buyQ = orderBook.getBuyLevel(bid);
+                auto& sellQ = orderBook.getSellLevel(ask);
 
-        if(sell.quantity == 0)
-            orderBook.cancelOrder(sell.orderId);
+                auto& buy = buyQ.front();
+                auto& sell = sellQ.front();
+
+                int qty = std::min(buy.quantity, sell.quantity);
+
+                std::cout << "TRADE → " << qty << " @ " << ask << "\n";
+
+                buy.quantity -= qty;
+                sell.quantity -= qty;
+
+                if(buy.quantity == 0)
+                    orderBook.cancelOrder(buy.orderId);
+
+                if(sell.quantity == 0)
+                    orderBook.cancelOrder(sell.orderId);
+            }
+        }
     }
 }
