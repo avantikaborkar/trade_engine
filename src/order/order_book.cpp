@@ -84,12 +84,20 @@ void OrderBook::updateBestAsk() {
 void OrderBook::printBook() {
 
     std::cout << "\nBUY\n";
-    for(int p = bestBid; p >= 0; --p)
-        for(auto& o : buyLevels[p])
-            std::cout << o.quantity << " @ " << p << "\n";
+    for (int i = buyLevels.size() - 1; i >= 0; --i) {
+    if (!buyLevels[i].empty()) {
+        for (auto& order : buyLevels[i]) {
+            std::cout << order.quantity << " @ " << i << "\n";
+        }
+    }
+}
 
     std::cout << "\nSELL\n";
-    for(int p = bestAsk; p <= MAX_PRICE; ++p)
-        for(auto& o : sellLevels[p])
-            std::cout << o.quantity << " @ " << p << "\n";
+    for (int i = sellLevels.size() - 1; i >= 0; --i) {
+    if (!sellLevels[i].empty()) {
+        for (auto& order : sellLevels[i]) {
+            std::cout << order.quantity << " @ " << i << "\n";
+        }
+    }
+}
 }

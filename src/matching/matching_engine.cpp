@@ -24,9 +24,7 @@ void MatchingEngine::matchLoop() {
 
             orderBook.addOrder(order);
 
-            while(orderBook.getBestBid() != -1 &&
-                  orderBook.getBestAsk() != -1 &&
-                  orderBook.getBestBid() >= orderBook.getBestAsk()) {
+            while(orderBook.getBestBid() != -1 && orderBook.getBestAsk() != -1 && orderBook.getBestBid() >= orderBook.getBestAsk()) {
 
                 int bid = orderBook.getBestBid();
                 int ask = orderBook.getBestAsk();
@@ -39,7 +37,7 @@ void MatchingEngine::matchLoop() {
 
                 int qty = std::min(buy.quantity, sell.quantity);
 
-                std::cout << "TRADE → " << qty << " @ " << ask << "\n";
+                std::cout << "TRADE:" << qty << " @ " << ask << "\n";
 
                 buy.quantity -= qty;
                 sell.quantity -= qty;
