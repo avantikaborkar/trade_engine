@@ -12,6 +12,8 @@ struct Order {
     int price;
     int quantity;
     Side side;
+    Order* next = nullptr;
+    Order* prev = nullptr;
     Order() : orderId(0), price(0), quantity(0), side(Side::BUY) {}
     Order(int id, int p, int q, Side s) : orderId(id), price(p), quantity(q), side(s) {}
 };

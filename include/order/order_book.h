@@ -2,7 +2,7 @@
 
 #include "order.h"
 #include <vector>
-#include <list>
+#include "memory/memory_pool.h"
 #include <unordered_map>
 
 class OrderBook {
@@ -10,24 +10,21 @@ class OrderBook {
 private:
     static const int MAX_PRICE = 10000;
 
-    std::vector<std::list<Order>> buyLevels;
-    std::vector<std::list<Order>> sellLevels;
-
-    std::unordered_map<int, std::list<Order>::iterator> orderMap;
-
+    std::vector<Order*> buyLevels;
+    std::vector<Order*> sellLevels;
+    std::unordered_map<int, Order*> orderMap;
+    MemoryPool<Order> pool;
     int bestBid;
     int bestAsk;
 
 public:
     OrderBook();
-
     void addOrder(const Order& order);
     void cancelOrder(int orderId);
     int getBestBid() const;
     int getBestAsk() const;
-    std::list<Order>& getBuyLevel(int price);
-    std::list<Order>& getSellLevel(int price);
-
+    Order* getBuyHead(int price);
+    Order* getSellHead(int price);
     void updateBestBid();
     void updateBestAsk();
 
