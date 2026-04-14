@@ -13,7 +13,6 @@ private:
 
 public:
     MatchingEngine(OrderBook& ob, SPSCQueue<Order>& q);
-
     void start();
     void stop();
 
