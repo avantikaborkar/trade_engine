@@ -1,32 +1,50 @@
 #include "order/order_book.h"
 #include <iostream>
 
-OrderBook::OrderBook() : buyLevels(MAX_PRICE + 1),sellLevels(MAX_PRICE + 1),bestBid(-1),bestAsk(-1) {}
+OrderBook::OrderBook(): buyLevels(MAX_PRICE + 1, nullptr),  sellLevels(MAX_PRICE + 1, nullptr),  pool(10000),  bestBid(-1),  bestAsk(-1) {}
 
 void OrderBook::addOrder(const Order& order) {
 
-    if(order.side == Side::BUY) {
+    Order* newOrder = pool.allocate();
+    *newOrder = order;
+    newOrder->next = nullptr;
+    newOrder->prev = nullptr;
 
-        auto& level = buyLevels[order.price];
-        level.push_back(order);
+    if(order.side == Side::BUY) 
+    {
 
-        auto it = --level.end();
-        orderMap[order.orderId] = it;
+        Order*& head = buyLevels[order.price];
+
+        if(!head) head = newOrder;
+        else 
+        {
+            Order* temp = head;
+            while(temp->next) temp = temp->next;
+            temp->next = newOrder;
+            newOrder->prev = temp;
+        }
 
         if(order.price > bestBid)
             bestBid = order.price;
     }
-    else {
+    else 
+    {
 
-        auto& level = sellLevels[order.price];
-        level.push_back(order);
+        Order*& head = sellLevels[order.price];
 
-        auto it = --level.end();
-        orderMap[order.orderId] = it;
+        if(!head) head = newOrder;
+        else {
+            Order* temp = head;
+            while(temp->next) temp = temp->next;
+            temp->next = newOrder;
+            newOrder->prev = temp;
+        }
 
         if(bestAsk == -1 || order.price < bestAsk)
             bestAsk = order.price;
     }
+
+    orderMap[order.orderId] = newOrder;
 }
 
 void OrderBook::cancelOrder(int orderId) {
@@ -34,70 +52,77 @@ void OrderBook::cancelOrder(int orderId) {
     auto it = orderMap.find(orderId);
     if(it == orderMap.end()) return;
 
-    auto orderIt = it->second;
-    int price = orderIt->price;
-    Side side = orderIt->side;
+    Order* order = it->second;
+    int price = order->price;
 
-    if(side == Side::BUY) {
+    if(order->side == Side::BUY) 
+    {
 
-        auto& level = buyLevels[price];
-        level.erase(orderIt);
+        Order*& head = buyLevels[price];
 
-        if(level.empty())
-            updateBestBid();
+        if(order->prev) order->prev->next = order->next;
+        if(order->next) order->next->prev = order->prev;
+
+        if(head == order) head = order->next;
+
+        if(!head) updateBestBid();
     }
-    else {
+    else 
+    {
 
-        auto& level = sellLevels[price];
-        level.erase(orderIt);
+        Order*& head = sellLevels[price];
 
-        if(level.empty())
-            updateBestAsk();
+        if(order->prev) order->prev->next = order->next;
+        if(order->next) order->next->prev = order->prev;
+
+        if(head == order) head = order->next;
+
+        if(!head) updateBestAsk();
     }
 
+    pool.deallocate(order);
     orderMap.erase(orderId);
 }
 
 int OrderBook::getBestBid() const { return bestBid; }
 int OrderBook::getBestAsk() const { return bestAsk; }
 
-std::list<Order>& OrderBook::getBuyLevel(int price) {
-    return buyLevels[price];
-}
-
-std::list<Order>& OrderBook::getSellLevel(int price) {
-    return sellLevels[price];
-}
+Order* OrderBook::getBuyHead(int price) { return buyLevels[price]; }
+Order* OrderBook::getSellHead(int price) { return sellLevels[price]; }
 
 void OrderBook::updateBestBid() {
-    while(bestBid >= 0 && buyLevels[bestBid].empty())
+    while(bestBid >= 0 && !buyLevels[bestBid])
         bestBid--;
-    if(bestBid < 0) bestBid = -1;
 }
 
 void OrderBook::updateBestAsk() {
-    while(bestAsk <= MAX_PRICE && sellLevels[bestAsk].empty())
+    while(bestAsk <= MAX_PRICE && !sellLevels[bestAsk])
+    {
         bestAsk++;
-    if(bestAsk > MAX_PRICE) bestAsk = -1;
+        if(bestAsk > MAX_PRICE) {
+            bestAsk = -1;
+            break;
+        }
+    }
 }
 
 void OrderBook::printBook() {
 
     std::cout << "\nBUY\n";
-    for (int i = buyLevels.size() - 1; i >= 0; --i) {
-    if (!buyLevels[i].empty()) {
-        for (auto& order : buyLevels[i]) {
-            std::cout << order.quantity << " @ " << i << "\n";
+    for(int p = bestBid; p >= 0; --p) {
+        Order* cur = buyLevels[p];
+        while(cur) {
+            std::cout << cur->quantity << " @ " << p << "\n";
+            cur = cur->next;
         }
     }
-}
 
     std::cout << "\nSELL\n";
-    for (int i = sellLevels.size() - 1; i >= 0; --i) {
-    if (!sellLevels[i].empty()) {
-        for (auto& order : sellLevels[i]) {
-            std::cout << order.quantity << " @ " << i << "\n";
+    for(int p = bestAsk; p <= MAX_PRICE; ++p) {
+        Order* cur = sellLevels[p];
+        while(cur) {
+            std::cout << cur->quantity << " @ " << p << "\n";
+            cur = cur->next;
         }
     }
-}
 }
