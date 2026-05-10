@@ -103,7 +103,7 @@ void OrderBook::updateBestAsk() {
 
 void OrderBook::printBook() {
 
-    std::cout << "\n--- BUY ---\n";
+    std::cout << "\n BUY \n";
     for(int p = bestBid; p >= 0; --p) {
         Order* cur = buyLevels[p];
         while(cur) {
@@ -112,7 +112,7 @@ void OrderBook::printBook() {
         }
     }
 
-    std::cout << "\n--- SELL ---\n";
+    std::cout << "\n SELL \n";
     for(int p = bestAsk; p <= MAX_PRICE; ++p) {
         Order* cur = sellLevels[p];
         while(cur) {
