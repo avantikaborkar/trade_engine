@@ -1,23 +1,27 @@
 #include "order/order_book.h"
 #include <iostream>
 
-OrderBook::OrderBook(): buyLevels(MAX_PRICE + 1, nullptr),  sellLevels(MAX_PRICE + 1, nullptr),  pool(10000),  bestBid(-1),  bestAsk(-1) {}
+OrderBook::OrderBook()
+    : buyLevels(MAX_PRICE + 1, nullptr),
+      sellLevels(MAX_PRICE + 1, nullptr),
+      pool(10000),
+      bestBid(-1),
+      bestAsk(-1) {}
 
 void OrderBook::addOrder(const Order& order) {
 
     Order* newOrder = pool.allocate();
+
     *newOrder = order;
     newOrder->next = nullptr;
     newOrder->prev = nullptr;
 
-    if(order.side == Side::BUY) 
-    {
+    if(order.side == Side::BUY) {
 
         Order*& head = buyLevels[order.price];
 
         if(!head) head = newOrder;
-        else 
-        {
+        else {
             Order* temp = head;
             while(temp->next) temp = temp->next;
             temp->next = newOrder;
@@ -27,8 +31,7 @@ void OrderBook::addOrder(const Order& order) {
         if(order.price > bestBid)
             bestBid = order.price;
     }
-    else 
-    {
+    else {
 
         Order*& head = sellLevels[order.price];
 
@@ -55,8 +58,7 @@ void OrderBook::cancelOrder(int orderId) {
     Order* order = it->second;
     int price = order->price;
 
-    if(order->side == Side::BUY) 
-    {
+    if(order->side == Side::BUY) {
 
         Order*& head = buyLevels[price];
 
@@ -67,8 +69,7 @@ void OrderBook::cancelOrder(int orderId) {
 
         if(!head) updateBestBid();
     }
-    else 
-    {
+    else {
 
         Order*& head = sellLevels[price];
 
@@ -97,18 +98,12 @@ void OrderBook::updateBestBid() {
 
 void OrderBook::updateBestAsk() {
     while(bestAsk <= MAX_PRICE && !sellLevels[bestAsk])
-    {
         bestAsk++;
-        if(bestAsk > MAX_PRICE) {
-            bestAsk = -1;
-            break;
-        }
-    }
 }
 
 void OrderBook::printBook() {
 
-    std::cout << "\nBUY\n";
+    std::cout << "\n--- BUY ---\n";
     for(int p = bestBid; p >= 0; --p) {
         Order* cur = buyLevels[p];
         while(cur) {
@@ -117,7 +112,7 @@ void OrderBook::printBook() {
         }
     }
 
-    std::cout << "\nSELL\n";
+    std::cout << "\n--- SELL ---\n";
     for(int p = bestAsk; p <= MAX_PRICE; ++p) {
         Order* cur = sellLevels[p];
         while(cur) {

@@ -5,7 +5,7 @@
 #include <atomic>
 
 class MatchingEngine {
-    
+
 private:
     OrderBook& orderBook;
     SPSCQueue<Order>& queue;
@@ -13,6 +13,7 @@ private:
 
 public:
     MatchingEngine(OrderBook& ob, SPSCQueue<Order>& q);
+
     void start();
     void stop();
 

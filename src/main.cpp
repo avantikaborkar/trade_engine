@@ -10,7 +10,6 @@ int main() {
     MatchingEngine engine(book, queue);
     engine.start();
 
-    // Producer thread
     std::thread producer([&]() {
 
         queue.push(Order(1,150,100,Side::BUY));

@@ -3,8 +3,7 @@
 #include <thread>
 #include <algorithm>
 
-MatchingEngine::MatchingEngine(OrderBook& ob, SPSCQueue<Order>& q)
-    : orderBook(ob), queue(q), running(true) {}
+MatchingEngine::MatchingEngine(OrderBook& ob, SPSCQueue<Order>& q): orderBook(ob), queue(q), running(true) {}
 
 void MatchingEngine::start() {
     std::thread(&MatchingEngine::matchLoop, this).detach();
@@ -16,7 +15,7 @@ void MatchingEngine::stop() {
 
 void MatchingEngine::matchLoop() {
 
-    Order order(0,0,0,Side::BUY);
+    Order order;
 
     while(running) {
 
@@ -29,24 +28,21 @@ void MatchingEngine::matchLoop() {
                 int bid = orderBook.getBestBid();
                 int ask = orderBook.getBestAsk();
 
-                auto& buyQ = orderBook.getBuyLevel(bid);
-                auto& sellQ = orderBook.getSellLevel(ask);
+                Order* buy = orderBook.getBuyHead(bid);
+                Order* sell = orderBook.getSellHead(ask);
 
-                auto& buy = buyQ.front();
-                auto& sell = sellQ.front();
+                int qty = std::min(buy->quantity, sell->quantity);
 
-                int qty = std::min(buy.quantity, sell.quantity);
+                std::cout << "TRADE → " << qty << " @ " << ask << "\n";
 
-                std::cout << "TRADE:" << qty << " @ " << ask << "\n";
+                buy->quantity -= qty;
+                sell->quantity -= qty;
 
-                buy.quantity -= qty;
-                sell.quantity -= qty;
+                if(buy->quantity == 0)
+                    orderBook.cancelOrder(buy->orderId);
 
-                if(buy.quantity == 0)
-                    orderBook.cancelOrder(buy.orderId);
-
-                if(sell.quantity == 0)
-                    orderBook.cancelOrder(sell.orderId);
+                if(sell->quantity == 0)
+                    orderBook.cancelOrder(sell->orderId);
             }
         }
     }
