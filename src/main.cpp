@@ -1,31 +1,55 @@
+#include "order/order_book.h"
+
 #include "matching/matching_engine.h"
+
+#include "market_data/market_data_publisher.h"
+
+#include "gateway/order_gateway.h"
+
+#include "risk/risk_engine.h"
+
+#include "journal/journaler.h"
+
+#include "queue/spsc_queue.h"
+
 #include <thread>
 #include <chrono>
 
 int main() {
 
     OrderBook book;
-    SPSCQueue<Order> queue(1024);
 
-    MatchingEngine engine(book, queue);
+    SPSCQueue<Order> orderQueue(1024);
+
+    SPSCQueue<TradeEvent> tradeQueue(1024);
+
+    RiskEngine riskEngine(1000,10000);
+
+    Journaler journaler("data/orders.log");
+
+    journaler.replayOrders();
+
+    MatchingEngine engine(book,orderQueue,tradeQueue);
+
+    MarketDataPublisher publisher(tradeQueue);
+
+    OrderGateway gateway(orderQueue,riskEngine,journaler);
+
     engine.start();
 
-    std::thread producer([&]() {
+    publisher.start();
 
-        queue.push(Order(1,150,100,Side::BUY));
-        queue.push(Order(2,150,50,Side::BUY));
+    gateway.receiveMessage("BUY 150 100");
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    gateway.receiveMessage("SELL 149 80");
 
-        queue.push(Order(3,149,80,Side::SELL));
-        queue.push(Order(4,149,50,Side::SELL));
-    });
-
-    producer.join();
+    gateway.receiveMessage("BUY 155 50");
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     engine.stop();
+
+    publisher.stop();
 
     book.printBook();
 

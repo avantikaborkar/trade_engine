@@ -1,15 +1,17 @@
 #include "matching/matching_engine.h"
-#include <iostream>
-#include <thread>
-#include <algorithm>
 
-MatchingEngine::MatchingEngine(OrderBook& ob, SPSCQueue<Order>& q): orderBook(ob), queue(q), running(true) {}
+#include <algorithm>
+#include <thread>
+
+MatchingEngine::MatchingEngine(OrderBook& ob,SPSCQueue<Order>& oq,SPSCQueue<TradeEvent>& tq) : orderBook(ob), orderQueue(oq),  tradeQueue(tq), running(true) {}
 
 void MatchingEngine::start() {
+
     std::thread(&MatchingEngine::matchLoop, this).detach();
 }
 
 void MatchingEngine::stop() {
+
     running = false;
 }
 
@@ -19,7 +21,7 @@ void MatchingEngine::matchLoop() {
 
     while(running) {
 
-        if(queue.pop(order)) {
+        if(orderQueue.pop(order)) {
 
             orderBook.addOrder(order);
 
@@ -28,21 +30,28 @@ void MatchingEngine::matchLoop() {
                 int bid = orderBook.getBestBid();
                 int ask = orderBook.getBestAsk();
 
-                Order* buy = orderBook.getBuyHead(bid);
-                Order* sell = orderBook.getSellHead(ask);
+                Order* buy =orderBook.getBuyHead(bid);
 
-                int qty = std::min(buy->quantity, sell->quantity);
+                Order* sell =orderBook.getSellHead(ask);
 
-                std::cout << "TRADE → " << qty << " @ " << ask << "\n";
+                int quantity =std::min(buy->quantity, sell->quantity);
 
-                buy->quantity -= qty;
-                sell->quantity -= qty;
+                TradeEvent event(ask,quantity);
 
-                if(buy->quantity == 0)
+                tradeQueue.push(event);
+
+                buy->quantity -= quantity;
+                sell->quantity -= quantity;
+
+                if(buy->quantity == 0) {
+
                     orderBook.cancelOrder(buy->orderId);
+                }
 
-                if(sell->quantity == 0)
+                if(sell->quantity == 0) {
+
                     orderBook.cancelOrder(sell->orderId);
+                }
             }
         }
     }
