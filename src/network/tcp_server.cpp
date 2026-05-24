@@ -16,23 +16,13 @@
 
 #endif
 
-TCPServer::TCPServer(
-    int p,
-    OrderGateway& gw
-)
-    : port(p),
-      gateway(gw),
-      running(false),
-      serverSocket(-1) {}
+TCPServer::TCPServer(int p, OrderGateway& gw) : port(p), gateway(gw), running(false), serverSocket(-1) {}
 
 void TCPServer::start() {
 
     running = true;
 
-    serverThread = std::thread(
-        &TCPServer::run,
-        this
-    );
+    serverThread = std::thread( &TCPServer::run, this);
 }
 
 void TCPServer::stop() {
@@ -57,23 +47,15 @@ void TCPServer::run() {
 
     WSADATA wsa;
 
-    WSAStartup(
-        MAKEWORD(2,2),
-        &wsa
-    );
+    WSAStartup( MAKEWORD(2,2), &wsa);
 
 #endif
 
-    serverSocket = socket(
-        AF_INET,
-        SOCK_STREAM,
-        0
-    );
+    serverSocket = socket(AF_INET,SOCK_STREAM,0);
 
     if(serverSocket < 0) {
 
-        std::cout
-            << "[TCP] Socket creation failed\n";
+        std::cout << "[TCP] Socket creation failed\n";
 
         return;
     }
@@ -86,24 +68,16 @@ void TCPServer::run() {
 
     serverAddr.sin_port = htons(port);
 
-    if(bind(
-        serverSocket,
-        (sockaddr*)&serverAddr,
-        sizeof(serverAddr)
-    ) < 0) {
+    if(bind(serverSocket,(sockaddr*)&serverAddr,sizeof(serverAddr)) < 0) {
 
-        std::cout
-            << "[TCP] Bind failed\n";
+        std::cout<< "[TCP] Bind failed\n";
 
         return;
     }
 
     listen(serverSocket, 5);
 
-    std::cout
-        << "[TCP] Server listening on port "
-        << port
-        << "\n";
+    std::cout << "[TCP] Server listening on port " << port << "\n";
 
     while(running) {
 
@@ -115,18 +89,14 @@ void TCPServer::run() {
         socklen_t clientLen = sizeof(clientAddr);
 #endif
 
-        int clientSocket = accept(
-            serverSocket,
-            (sockaddr*)&clientAddr,
-            &clientLen
-        );
+        int clientSocket = accept( serverSocket, (sockaddr*)&clientAddr, &clientLen);
 
-        if(clientSocket < 0) {
+        if(clientSocket < 0) 
+        {
             continue;
         }
 
-        std::cout
-            << "[TCP] Client connected\n";
+        std::cout<< "[TCP] Client connected\n";
 
         char buffer[1024];
 
@@ -163,8 +133,7 @@ while(true) {
 
     size_t pos;
 
-    while((pos = messageBuffer.find('\n'))
-           != std::string::npos) {
+    while((pos = messageBuffer.find('\n'))!= std::string::npos) {
 
         std::string message =
             messageBuffer.substr(0, pos);
@@ -177,10 +146,7 @@ while(true) {
             message.pop_back();
         }
 
-        std::cout
-            << "[TCP] Received: "
-            << message
-            << "\n";
+        std::cout << "[TCP] Received: " << message << "\n";
 
         gateway.receiveMessage(message);
     }
