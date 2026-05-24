@@ -10,10 +10,13 @@
 
 #include "journal/journaler.h"
 
+#include "network/tcp_server.h"
+
 #include "queue/spsc_queue.h"
 
 #include <thread>
 #include <chrono>
+#include <iostream>
 
 int main() {
 
@@ -23,35 +26,56 @@ int main() {
 
     SPSCQueue<TradeEvent> tradeQueue(1024);
 
-    RiskEngine riskEngine(1000,10000);
+    RiskEngine riskEngine(
+        1000,
+        10000
+    );
 
-    Journaler journaler("data/orders.log");
+    Journaler journaler(
+        "data/orders.log"
+    );
 
     journaler.replayOrders();
 
-    MatchingEngine engine(book,orderQueue,tradeQueue);
+    MatchingEngine engine(
+        book,
+        orderQueue,
+        tradeQueue
+    );
 
-    MarketDataPublisher publisher(tradeQueue);
+    MarketDataPublisher publisher(
+        tradeQueue
+    );
 
-    OrderGateway gateway(orderQueue,riskEngine,journaler);
+    OrderGateway gateway(
+        orderQueue,
+        riskEngine,
+        journaler
+    );
+
+    TCPServer server(
+        8080,
+        gateway
+    );
 
     engine.start();
 
     publisher.start();
 
-    gateway.receiveMessage("BUY 150 100");
+    server.start();
 
-    gateway.receiveMessage("SELL 149 80");
+    std::cout
+        << "\nExchange running...\n";
 
-    gateway.receiveMessage("BUY 155 50");
+    std::cout
+        << "Use telnet or netcat to send orders\n";
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    while(true) {
 
-    engine.stop();
-
-    publisher.stop();
-
-    book.printBook();
+        std::this_thread::sleep_for(
+            std::chrono::seconds(1)
+        );
+    }
 
     return 0;
 }
