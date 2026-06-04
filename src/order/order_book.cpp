@@ -92,14 +92,31 @@ Order* OrderBook::getBuyHead(int price) { return buyLevels[price]; }
 Order* OrderBook::getSellHead(int price) { return sellLevels[price]; }
 
 void OrderBook::updateBestBid() {
+
     while(bestBid >= 0 && !buyLevels[bestBid])
+    {
         bestBid--;
+    }
+
+    if(bestBid < 0) {
+
+        bestBid = -1;
+    }
 }
 
 void OrderBook::updateBestAsk() {
+
     while(bestAsk <= MAX_PRICE && !sellLevels[bestAsk])
+    {
         bestAsk++;
+    }
+
+    if(bestAsk > MAX_PRICE) {
+
+        bestAsk = -1;
+    }
 }
+
 
 void OrderBook::printBook() {
 

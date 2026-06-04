@@ -1,73 +1,58 @@
 #include "gateway/order_gateway.h"
 
-#include <sstream>
 #include <iostream>
 
-OrderGateway::OrderGateway(SPSCQueue<Order>& queue,RiskEngine& risk,Journaler& journal)
+OrderGateway::OrderGateway(
+    ThreadSafeQueue<Order>& queue,
+    RiskEngine& risk,
+    Journaler& journal
+)
     : orderQueue(queue), riskEngine(risk), journaler(journal), nextOrderId(1) {}
 
-bool OrderGateway::receiveMessage(const std::string& message) {
+bool OrderGateway::receiveBinaryOrder(
+    uint8_t sideValue,
+    int price,
+    int quantity
+) {
 
-    Order order;
+    Side side;
 
-    if(!parseMessage(message, order)) {
+    if(sideValue == 1) {
 
-        std::cout << "[GATEWAY] Invalid message"<<std::endl;
+        side = Side::BUY;
+    }
+    else if(sideValue == 2) {
+
+        side = Side::SELL;
+    }
+    else {
+
+        std::cout << "[GATEWAY] Invalid side\n";
+
         return false;
     }
 
+    Order order(
+        nextOrderId++,
+        price,
+        quantity,
+        side
+    );
+
     if(!riskEngine.validateOrder(order)) {
 
-        std::cout<< "[GATEWAY] Risk rejected order "<< order.orderId<< std::endl;
+        std::cout
+            << "[GATEWAY] Risk rejected order " << order.orderId << "\n";
 
         return false;
     }
 
     journaler.logOrder(order);
 
-    if(!orderQueue.push(order)) {
+    orderQueue.push(order);
 
-        std::cout << "[GATEWAY] Queue full "<< std::endl;
-
-        return false;
-    }
-
-    std::cout<< "[GATEWAY] Accepted order "<< order.orderId<< std::endl;
-
-    return true;
-}
-
-bool OrderGateway::parseMessage(const std::string& message,Order& order) {
-
-    std::stringstream ss(message);
-
-    std::string sideStr;
-
-    int price;
-    int quantity;
-
-    ss >> sideStr >> price >> quantity;
-
-    if(ss.fail()) {
-        return false;
-    }
-
-    Side side;
-
-    if(sideStr == "BUY") {
-
-        side = Side::BUY;
-    }
-    else if(sideStr == "SELL") {
-
-        side = Side::SELL;
-    }
-    else {
-
-        return false;
-    }
-
-    order = Order(nextOrderId++,price,quantity,side);
+    std::cout
+        << "[GATEWAY] Accepted binary order " << order.orderId << "\n";
 
     return true;
 }

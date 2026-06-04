@@ -4,43 +4,89 @@
 #include <iostream>
 #include <sstream>
 
-Journaler::Journaler(const std::string& file) : filename(file) {}
+Journaler::Journaler(
+    const std::string& file
+)
+    : filename(file) {}
 
-void Journaler::logOrder(const Order& order) {
+void Journaler::logOrder(
+    const Order& order
+) {
 
-    std::ofstream out(filename, std::ios::app);
+    std::ofstream out(
+        filename,
+        std::ios::app
+    );
 
     if(!out.is_open()) {
 
-        std::cout<< "NOTE: Failed to open log file\n";
+        std::cout
+            << "NOTE: Failed to open log file\n";
 
         return;
     }
 
-    out<< order.orderId << " "<< (order.side == Side::BUY ? "BUY" : "SELL") << " "<< order.price << " "<< order.quantity<< "\n";
-
-    out.close();
+    out
+        << order.orderId << " "
+        << (order.side == Side::BUY ? "BUY" : "SELL")
+        << " "
+        << order.price << " "
+        << order.quantity
+        << "\n";
 }
 
-void Journaler::replayOrders() {
+void Journaler::replayOrders(
+    OrderBook& book
+) {
 
     std::ifstream in(filename);
 
     if(!in.is_open()) {
 
-        std::cout<< "NOTE: No previous log found"<< std::endl;
+        std::cout<< "NOTE: No previous log found\n";
+
         return;
     }
 
-    std::cout
-        << "\nReplaying Orders:"<< std::endl;
+    std::cout<< "\nReplaying Orders:\n";
 
     std::string line;
 
     while(std::getline(in, line)) {
 
-        std::cout << line << std::endl;
+        std::cout<< line<< "\n";
+
+        std::stringstream ss(line);
+
+        int id;
+        std::string sideStr;
+        int price;
+        int qty;
+
+        ss>> id>> sideStr>> price>> qty;
+
+        Side side =(sideStr == "BUY")? Side::BUY: Side::SELL;
+
+        Order order(id, price, qty, side);
+
+        book.addOrder(order);
+    }
+}
+
+void Journaler::saveSnapshot(
+    OrderBook& book
+) {
+
+    std::ofstream out("data/snapshot.dat");
+
+    if(!out.is_open()) {
+
+        return;
     }
 
-    in.close();
+    out<< "SNAPSHOT CREATED\n";
+
+    out.close();
+
+    std::cout<< "[SNAPSHOT] Saved\n";
 }

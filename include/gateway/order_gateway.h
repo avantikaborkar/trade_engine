@@ -2,18 +2,17 @@
 
 #include "order/order.h"
 
-#include "queue/spsc_queue.h"
+#include "queue/thread_safe_queue.h"
 
 #include "risk/risk_engine.h"
 
 #include "journal/journaler.h"
 
-#include <string>
-
 class OrderGateway {
 
 private:
-    SPSCQueue<Order>& orderQueue;
+
+    ThreadSafeQueue<Order>& orderQueue;
 
     RiskEngine& riskEngine;
 
@@ -22,10 +21,16 @@ private:
     int nextOrderId;
 
 public:
-    OrderGateway(SPSCQueue<Order>& queue, RiskEngine& risk, Journaler& journal); 
 
-    bool receiveMessage(const std::string& message);
+    OrderGateway(
+        ThreadSafeQueue<Order>& queue,
+        RiskEngine& risk,
+        Journaler& journal
+    );
 
-private:
-    bool parseMessage(const std::string& message,Order& order); 
+    bool receiveBinaryOrder(
+        uint8_t side,
+        int price,
+        int quantity
+    );
 };

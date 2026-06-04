@@ -8,6 +8,7 @@
 class TCPServer {
 
 private:
+
     int serverSocket;
 
     int port;
@@ -19,12 +20,21 @@ private:
     OrderGateway& gateway;
 
 public:
-    TCPServer(int p, OrderGateway& gw);
+
+    TCPServer(
+        int p,
+        OrderGateway& gw
+    );
 
     void start();
 
     void stop();
 
 private:
+
     void run();
+
+    void handleClient(
+        int clientSocket
+    );
 };

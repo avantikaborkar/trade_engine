@@ -3,11 +3,22 @@
 #include <algorithm>
 #include <thread>
 
-MatchingEngine::MatchingEngine(OrderBook& ob,SPSCQueue<Order>& oq,SPSCQueue<TradeEvent>& tq) : orderBook(ob), orderQueue(oq),  tradeQueue(tq), running(true) {}
+MatchingEngine::MatchingEngine(
+    OrderBook& ob,
+    ThreadSafeQueue<Order>& oq,
+    SPSCQueue<TradeEvent>& tq
+)
+    : orderBook(ob),
+      orderQueue(oq),
+      tradeQueue(tq),
+      running(true) {}
 
 void MatchingEngine::start() {
 
-    std::thread(&MatchingEngine::matchLoop, this).detach();
+    std::thread(
+        &MatchingEngine::matchLoop,
+        this
+    ).detach();
 }
 
 void MatchingEngine::stop() {
@@ -21,37 +32,55 @@ void MatchingEngine::matchLoop() {
 
     while(running) {
 
-        if(orderQueue.pop(order)) {
+        orderQueue.pop(order);
 
-            orderBook.addOrder(order);
+        orderBook.addOrder(order);
 
-            while(orderBook.getBestBid() != -1 && orderBook.getBestAsk() != -1 && orderBook.getBestBid() >= orderBook.getBestAsk()) {
+        while(
+            orderBook.getBestBid() != -1 &&
+            orderBook.getBestAsk() != -1 &&
+            orderBook.getBestBid() >= orderBook.getBestAsk()
+        ) {
 
-                int bid = orderBook.getBestBid();
-                int ask = orderBook.getBestAsk();
+            int bid = orderBook.getBestBid();
 
-                Order* buy =orderBook.getBuyHead(bid);
+            int ask = orderBook.getBestAsk();
 
-                Order* sell =orderBook.getSellHead(ask);
+            Order* buy =
+                orderBook.getBuyHead(bid);
 
-                int quantity =std::min(buy->quantity, sell->quantity);
+            Order* sell =
+                orderBook.getSellHead(ask);
 
-                TradeEvent event(ask,quantity);
+            int quantity =
+                std::min(
+                    buy->quantity,
+                    sell->quantity
+                );
 
-                tradeQueue.push(event);
+            TradeEvent event(
+                ask,
+                quantity
+            );
 
-                buy->quantity -= quantity;
-                sell->quantity -= quantity;
+            tradeQueue.push(event);
 
-                if(buy->quantity == 0) {
+            buy->quantity -= quantity;
 
-                    orderBook.cancelOrder(buy->orderId);
-                }
+            sell->quantity -= quantity;
 
-                if(sell->quantity == 0) {
+            if(buy->quantity == 0) {
 
-                    orderBook.cancelOrder(sell->orderId);
-                }
+                orderBook.cancelOrder(
+                    buy->orderId
+                );
+            }
+
+            if(sell->quantity == 0) {
+
+                orderBook.cancelOrder(
+                    sell->orderId
+                );
             }
         }
     }

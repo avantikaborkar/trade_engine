@@ -13,7 +13,7 @@
 #include "network/tcp_server.h"
 
 #include "queue/spsc_queue.h"
-
+#include "queue/thread_safe_queue.h"
 #include <thread>
 #include <chrono>
 #include <iostream>
@@ -22,7 +22,7 @@ int main() {
 
     OrderBook book;
 
-    SPSCQueue<Order> orderQueue(1024);
+    ThreadSafeQueue<Order> orderQueue;
 
     SPSCQueue<TradeEvent> tradeQueue(1024);
 
@@ -35,7 +35,7 @@ int main() {
         "data/orders.log"
     );
 
-    journaler.replayOrders();
+    journaler.replayOrders(book);
 
     MatchingEngine engine(
         book,
@@ -44,7 +44,7 @@ int main() {
     );
 
     MarketDataPublisher publisher(
-        tradeQueue
+        tradeQueue,book
     );
 
     OrderGateway gateway(
@@ -76,6 +76,8 @@ int main() {
             std::chrono::seconds(1)
         );
     }
+
+    journaler.saveSnapshot(book);
 
     return 0;
 }
