@@ -138,3 +138,53 @@ void OrderBook::printBook() {
         }
     }
 }
+
+std::vector<Order> OrderBook::getAllOrders() const {
+
+    std::vector<Order> orders;
+
+    for(int price = 0; price <= MAX_PRICE; ++price) {
+
+        Order* cur = buyLevels[price];
+
+        while(cur) {
+
+            orders.push_back(*cur);
+
+            cur = cur->next;
+        }
+    }
+
+    for(int price = 0; price <= MAX_PRICE; ++price) {
+
+        Order* cur = sellLevels[price];
+
+        while(cur) {
+
+            orders.push_back(*cur);
+
+            cur = cur->next;
+        }
+    }
+
+    return orders;
+}
+
+void OrderBook::clear() {
+
+    orderMap.clear();
+
+    for(auto& level : buyLevels) {
+
+        level = nullptr;
+    }
+
+    for(auto& level : sellLevels) {
+
+        level = nullptr;
+    }
+
+    bestBid = -1;
+
+    bestAsk = -1;
+}

@@ -10,7 +10,7 @@ class TCPServer {
 private:
 
     int serverSocket;
-
+    
     int port;
 
     std::atomic<bool> running;

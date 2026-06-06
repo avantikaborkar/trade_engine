@@ -176,7 +176,9 @@ void TCPServer::handleClient(
 
         std::cout
             << "[TCP] Binary Order -> "
-            << "side="
+            << "symbol="
+            << packet.symbol
+            << " side="
             << (int)packet.side
             << " price="
             << packet.price
@@ -185,6 +187,7 @@ void TCPServer::handleClient(
             << "\n";
 
         gateway.receiveBinaryOrder(
+            std::string(packet.symbol),
             packet.side,
             packet.price,
             packet.quantity

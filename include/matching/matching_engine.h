@@ -1,6 +1,6 @@
 #pragma once
 
-#include "order/order_book.h"
+#include "exchange/exchange.h"
 
 #include "queue/thread_safe_queue.h"
 
@@ -14,7 +14,7 @@ class MatchingEngine {
 
 private:
 
-    OrderBook& orderBook;
+    Exchange& exchange;
 
     ThreadSafeQueue<Order>& orderQueue;
 
@@ -25,7 +25,7 @@ private:
 public:
 
     MatchingEngine(
-        OrderBook& ob,
+        Exchange& ex,
         ThreadSafeQueue<Order>& oq,
         SPSCQueue<TradeEvent>& tq
     );

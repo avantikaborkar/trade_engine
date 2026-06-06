@@ -1,5 +1,5 @@
 #pragma once
-
+#include "exchange/exchange.h"
 #include "order/order.h"
 #include "order/order_book.h"
 
@@ -26,6 +26,11 @@ public:
     );
 
     void saveSnapshot(
-        OrderBook& book
+        Exchange& exchange
     );
+
+    void loadSnapshot(
+        Exchange& exchange
+    );
+    int getHighestOrderId();
 };

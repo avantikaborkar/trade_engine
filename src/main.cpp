@@ -1,5 +1,7 @@
 #include "order/order_book.h"
 
+#include "exchange/exchange.h"
+
 #include "matching/matching_engine.h"
 
 #include "market_data/market_data_publisher.h"
@@ -20,7 +22,7 @@
 
 int main() {
 
-    OrderBook book;
+    Exchange exchange;
 
     ThreadSafeQueue<Order> orderQueue;
 
@@ -35,16 +37,8 @@ int main() {
         "data/orders.log"
     );
 
-    journaler.replayOrders(book);
-
-    MatchingEngine engine(
-        book,
-        orderQueue,
-        tradeQueue
-    );
-
-    MarketDataPublisher publisher(
-        tradeQueue,book
+    journaler.loadSnapshot(
+        exchange
     );
 
     OrderGateway gateway(
@@ -52,6 +46,24 @@ int main() {
         riskEngine,
         journaler
     );
+
+    int highestId =
+    journaler.getHighestOrderId();
+
+    gateway.setNextOrderId(
+        highestId + 1
+);
+
+    MatchingEngine engine(
+        exchange,
+        orderQueue,
+        tradeQueue
+    );
+
+    MarketDataPublisher publisher(
+        tradeQueue
+    );
+
 
     TCPServer server(
         8080,
@@ -70,14 +82,26 @@ int main() {
     std::cout
         << "Use telnet or netcat to send orders\n";
 
-    while(true) {
+    char cmd;
 
-        std::this_thread::sleep_for(
-            std::chrono::seconds(1)
-        );
-    }
+        while(std::cin >> cmd) {
 
-    journaler.saveSnapshot(book);
+            if(cmd == 'q') {
 
-    return 0;
+                journaler.saveSnapshot(exchange);
+                if(cmd == 'q') {
+
+                journaler.saveSnapshot(exchange);
+
+                engine.stop();
+                publisher.stop();
+                server.stop();
+
+            
+                }
+                break;
+            }
+        }
+
+return 0;
 }

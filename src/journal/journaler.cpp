@@ -67,26 +67,140 @@ void Journaler::replayOrders(
 
         Side side =(sideStr == "BUY")? Side::BUY: Side::SELL;
 
-        Order order(id, price, qty, side);
+        Order order(id,"AAPL", price, qty, side);
 
         book.addOrder(order);
     }
 }
 
 void Journaler::saveSnapshot(
-    OrderBook& book
+    Exchange& exchange
 ) {
 
-    std::ofstream out("data/snapshot.dat");
+    std::ofstream out(
+        "data/snapshot.dat"
+    );
 
     if(!out.is_open()) {
 
         return;
     }
 
-    out<< "SNAPSHOT CREATED\n";
+    const auto& books =
+        exchange.getAllBooks();
 
-    out.close();
+    for(const auto& pair : books) {
 
-    std::cout<< "[SNAPSHOT] Saved\n";
+        const std::string& symbol =
+            pair.first;
+
+        const OrderBook& book =
+            pair.second;
+
+        auto orders =
+            book.getAllOrders();
+
+        for(const auto& order : orders) {
+
+            out
+                << order.orderId << " "
+                << symbol << " "
+                << (order.side == Side::BUY
+                    ? "BUY"
+                    : "SELL")
+                << " "
+                << order.price << " "
+                << order.quantity
+                << "\n";
+        }
+    }
+
+    std::cout
+        << "[SNAPSHOT] Saved\n";
+}
+
+void Journaler::loadSnapshot(
+    Exchange& exchange
+) {
+
+    std::ifstream in(
+        "data/snapshot.dat"
+    );
+
+    if(!in.is_open()) {
+
+        std::cout
+            << "[SNAPSHOT] No snapshot found\n";
+
+        return;
+    }
+
+    int id;
+    std::string symbol;
+    std::string sideStr;
+    int price;
+    int qty;
+
+    while(
+        in
+        >> id
+        >> symbol
+        >> sideStr
+        >> price
+        >> qty
+    ) {
+
+        Side side =
+            (sideStr == "BUY")
+            ? Side::BUY
+            : Side::SELL;
+
+        Order order(
+            id,
+            symbol,
+            price,
+            qty,
+            side
+        );
+
+        exchange
+            .getBook(symbol)
+            .addOrder(order);
+    }
+
+    std::cout
+        << "[SNAPSHOT] Loaded\n";
+}
+
+int Journaler::getHighestOrderId() {
+
+    std::ifstream in("data/snapshot.dat");
+
+    if(!in.is_open()) {
+        return 0;
+    }
+
+    int maxId = 0;
+
+    int id;
+    std::string symbol;
+    std::string sideStr;
+    int price;
+    int qty;
+
+    while(
+        in
+        >> id
+        >> symbol
+        >> sideStr
+        >> price
+        >> qty
+    ) {
+
+        if(id > maxId) {
+            maxId = id;
+        }
+    }
+
+    return maxId;
 }

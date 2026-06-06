@@ -2,12 +2,15 @@
 #include <winsock2.h>
 #include <cstdint>
 #include <string>
+#include <cstring>
 
 #pragma comment(lib, "ws2_32.lib")
 
 #pragma pack(push, 1)
 
 struct BinaryOrderPacket {
+
+    char symbol[16];
 
     uint8_t side;
 
@@ -54,14 +57,28 @@ int main() {
         return 1;
     }
 
-    BinaryOrderPacket packet;
+    BinaryOrderPacket packet{};
 
+    std::string symbol;
     std::string side;
+
+    std::cout
+        << "Symbol: ";
+
+    std::cin
+        >> symbol;
+
+    strncpy(
+        packet.symbol,
+        symbol.c_str(),
+        sizeof(packet.symbol) - 1
+    );
 
     std::cout
         << "Side (BUY/SELL): ";
 
-    std::cin >> side;
+    std::cin
+        >> side;
 
     if(side == "BUY") {
 
@@ -82,12 +99,14 @@ int main() {
     std::cout
         << "Price: ";
 
-    std::cin >> packet.price;
+    std::cin
+        >> packet.price;
 
     std::cout
         << "Quantity: ";
 
-    std::cin >> packet.quantity;
+    std::cin
+        >> packet.quantity;
 
     send(
         sock,

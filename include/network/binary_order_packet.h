@@ -6,6 +6,8 @@
 
 struct BinaryOrderPacket {
 
+    char symbol[16];
+
     uint8_t side;
 
     int32_t price;

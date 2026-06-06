@@ -17,11 +17,9 @@
 #endif
 
 MarketDataPublisher::MarketDataPublisher(
-    SPSCQueue<TradeEvent>& queue,
-    OrderBook& book
+    SPSCQueue<TradeEvent>& queue
 )
     : tradeQueue(queue),
-      orderBook(book),
       running(true) {}
 
 void MarketDataPublisher::start() {
@@ -72,10 +70,11 @@ void MarketDataPublisher::publishLoop() {
         if(tradeQueue.pop(event)) {
 
             std::string tradeMsg =
-            "TRADE " +
-            std::to_string(event.quantity) +
-            " @ " +
-            std::to_string(event.price);
+                event.symbol +
+                " TRADE " +
+                std::to_string(event.quantity) +
+                " @ " +
+                std::to_string(event.price);
 
             sendto(
                 sock,
@@ -89,46 +88,6 @@ void MarketDataPublisher::publishLoop() {
             std::cout
                 << "[UDP] "
                 << tradeMsg
-                << "\n";
-
-            std::string bidMsg =
-                "BEST_BID " +
-                std::to_string(
-                    orderBook.getBestBid()
-                );
-
-            sendto(
-                sock,
-                bidMsg.c_str(),
-                (int)bidMsg.size(),
-                0,
-                (sockaddr*)&clientAddr,
-                sizeof(clientAddr)
-            );
-
-            std::string askMsg =
-                "BEST_ASK " +
-                std::to_string(
-                    orderBook.getBestAsk()
-                );
-
-            sendto(
-                sock,
-                askMsg.c_str(),
-                (int)askMsg.size(),
-                0,
-                (sockaddr*)&clientAddr,
-                sizeof(clientAddr)
-            );
-
-            std::cout
-                << "[UDP] "
-                << bidMsg
-                << "\n";
-
-            std::cout
-                << "[UDP] "
-                << askMsg
                 << "\n";
         }
     }

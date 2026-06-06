@@ -4,11 +4,11 @@
 #include <thread>
 
 MatchingEngine::MatchingEngine(
-    OrderBook& ob,
+    Exchange& ex,
     ThreadSafeQueue<Order>& oq,
     SPSCQueue<TradeEvent>& tq
 )
-    : orderBook(ob),
+    : exchange(ex),
       orderQueue(oq),
       tradeQueue(tq),
       running(true) {}
@@ -34,23 +34,28 @@ void MatchingEngine::matchLoop() {
 
         orderQueue.pop(order);
 
-        orderBook.addOrder(order);
+        OrderBook& book =
+            exchange.getBook(
+                order.symbol
+            );
+
+        book.addOrder(order);
 
         while(
-            orderBook.getBestBid() != -1 &&
-            orderBook.getBestAsk() != -1 &&
-            orderBook.getBestBid() >= orderBook.getBestAsk()
+            book.getBestBid() != -1 &&
+            book.getBestAsk() != -1 &&
+            book.getBestBid() >= book.getBestAsk()
         ) {
 
-            int bid = orderBook.getBestBid();
+            int bid = book.getBestBid();
 
-            int ask = orderBook.getBestAsk();
+            int ask = book.getBestAsk();
 
             Order* buy =
-                orderBook.getBuyHead(bid);
+                book.getBuyHead(bid);
 
             Order* sell =
-                orderBook.getSellHead(ask);
+                book.getSellHead(ask);
 
             int quantity =
                 std::min(
@@ -59,6 +64,7 @@ void MatchingEngine::matchLoop() {
                 );
 
             TradeEvent event(
+                order.symbol,
                 ask,
                 quantity
             );
@@ -71,14 +77,14 @@ void MatchingEngine::matchLoop() {
 
             if(buy->quantity == 0) {
 
-                orderBook.cancelOrder(
+                book.cancelOrder(
                     buy->orderId
                 );
             }
 
             if(sell->quantity == 0) {
 
-                orderBook.cancelOrder(
+                book.cancelOrder(
                     sell->orderId
                 );
             }

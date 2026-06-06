@@ -27,6 +27,7 @@ public:
     Order* getSellHead(int price);
     void updateBestBid();
     void updateBestAsk();
-
+    std::vector<Order> getAllOrders() const;
+    void clear();
     void printBook();
 };

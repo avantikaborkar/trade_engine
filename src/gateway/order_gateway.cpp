@@ -7,9 +7,13 @@ OrderGateway::OrderGateway(
     RiskEngine& risk,
     Journaler& journal
 )
-    : orderQueue(queue), riskEngine(risk), journaler(journal), nextOrderId(1) {}
+    : orderQueue(queue),
+      riskEngine(risk),
+      journaler(journal),
+      nextOrderId(1) {}
 
 bool OrderGateway::receiveBinaryOrder(
+    const std::string& symbol,
     uint8_t sideValue,
     int price,
     int quantity
@@ -27,13 +31,15 @@ bool OrderGateway::receiveBinaryOrder(
     }
     else {
 
-        std::cout << "[GATEWAY] Invalid side\n";
+        std::cout
+            << "[GATEWAY] Invalid side\n";
 
         return false;
     }
 
     Order order(
         nextOrderId++,
+        symbol,
         price,
         quantity,
         side
@@ -42,7 +48,9 @@ bool OrderGateway::receiveBinaryOrder(
     if(!riskEngine.validateOrder(order)) {
 
         std::cout
-            << "[GATEWAY] Risk rejected order " << order.orderId << "\n";
+            << "[GATEWAY] Risk rejected order "
+            << order.orderId
+            << "\n";
 
         return false;
     }
@@ -52,7 +60,15 @@ bool OrderGateway::receiveBinaryOrder(
     orderQueue.push(order);
 
     std::cout
-        << "[GATEWAY] Accepted binary order " << order.orderId << "\n";
+        << "[GATEWAY] Accepted "
+        << symbol
+        << " order "
+        << order.orderId
+        << "\n";
 
     return true;
+}
+
+void OrderGateway::setNextOrderId(int id) {
+    nextOrderId = id;
 }
