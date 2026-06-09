@@ -10,6 +10,8 @@ struct BinaryOrderPacket {
 
     uint8_t side;
 
+    uint8_t orderType;
+
     int32_t price;
 
     int32_t quantity;

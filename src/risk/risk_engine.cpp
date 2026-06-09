@@ -19,17 +19,24 @@ bool RiskEngine::validateOrder(const Order& order)
         return false;
     }
 
+    if(order.type == OrderType::LIMIT) {
+
     if(order.price <= 0) {
 
-        std::cout<< "RISK-> Invalid price\n";
+        std::cout
+            << "RISK-> Invalid price\n";
+
         return false;
     }
 
     if(order.price > maxPrice) {
 
-        std::cout<< "RISK-> Price limit exceeded\n";
+        std::cout
+            << "RISK-> Price limit exceeded\n";
+
         return false;
     }
+}
 
     return true;
 }

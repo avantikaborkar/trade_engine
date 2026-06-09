@@ -14,6 +14,8 @@ struct BinaryOrderPacket {
 
     uint8_t side;
 
+    uint8_t orderType;
+
     int32_t price;
 
     int32_t quantity;
@@ -61,6 +63,7 @@ int main() {
 
     std::string symbol;
     std::string side;
+    std::string type;
 
     std::cout
         << "Symbol: ";
@@ -97,11 +100,51 @@ int main() {
     }
 
     std::cout
-        << "Price: ";
+    << "Type (LIMIT/MARKET/IOC/FOK/STOP): ";
 
     std::cin
-        >> packet.price;
+        >> type;
 
+    if(type == "LIMIT") {
+
+        packet.orderType = 1;
+    }
+    else if(type == "MARKET" || type == "market") {
+
+        packet.orderType = 2;
+    }
+    else if(type == "IOC" || type == "ioc") {
+
+        packet.orderType = 3;
+    }
+    else if(type == "FOK" || type == "fok") {
+
+        packet.orderType = 4;
+    }
+    else if(type == "STOP" || type == "stop") {
+
+        packet.orderType = 5;
+    }
+    else {
+
+        std::cout
+            << "Invalid type\n";
+
+        return 1;
+    }
+
+    if(packet.orderType != 2) {
+
+        std::cout
+            << "Price: ";
+
+        std::cin
+            >> packet.price;
+    }
+    else {
+
+        packet.price = 0;
+    }
     std::cout
         << "Quantity: ";
 

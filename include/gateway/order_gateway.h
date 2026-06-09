@@ -29,10 +29,11 @@ public:
     );
 
     bool receiveBinaryOrder(
-    const std::string& symbol,
-    uint8_t side,
-    int price,
-    int quantity
+        const std::string& symbol,
+        uint8_t side,
+        uint8_t orderType,
+        int price,
+        int quantity
     );
 
     void setNextOrderId(int id);

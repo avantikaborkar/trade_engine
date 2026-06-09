@@ -10,6 +10,8 @@
 
 #include <atomic>
 
+#include <vector>
+
 class MatchingEngine {
 
 private:
@@ -22,6 +24,9 @@ private:
 
     std::atomic<bool> running;
 
+    std::vector<Order> stopOrders;
+
+    
 public:
 
     MatchingEngine(
@@ -30,6 +35,7 @@ public:
         SPSCQueue<TradeEvent>& tq
     );
 
+
     void start();
 
     void stop();
@@ -37,4 +43,19 @@ public:
 private:
 
     void matchLoop();
+
+    void processMarketOrder(
+        Order& order,
+        OrderBook& book
+    );
+    void processIOCOrder(
+        Order& order,
+        OrderBook& book
+    );
+    void processFOKOrder(
+        Order& order,
+        OrderBook& book
+    );
+
+    void checkStopOrders(int tradePrice);
 };

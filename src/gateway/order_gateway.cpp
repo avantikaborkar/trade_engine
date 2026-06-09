@@ -15,11 +15,42 @@ OrderGateway::OrderGateway(
 bool OrderGateway::receiveBinaryOrder(
     const std::string& symbol,
     uint8_t sideValue,
+    uint8_t orderTypeValue,
     int price,
     int quantity
 ) {
 
     Side side;
+
+    OrderType type;
+
+    if(orderTypeValue == 1) {
+
+        type = OrderType::LIMIT;
+    }
+    else if(orderTypeValue == 2) {
+
+        type = OrderType::MARKET;
+    }
+    else if(orderTypeValue == 3) {
+
+        type = OrderType::IOC;
+    }
+    else if(orderTypeValue == 4) {
+
+        type = OrderType::FOK;
+    }
+    else if(orderTypeValue == 5) {
+
+        type = OrderType::STOP;
+    }
+    else {
+
+        std::cout
+            << "[GATEWAY] Invalid order type\n";
+
+        return false;
+    }
 
     if(sideValue == 1) {
 
@@ -42,16 +73,19 @@ bool OrderGateway::receiveBinaryOrder(
         symbol,
         price,
         quantity,
-        side
+        side,
+        type
     );
 
     if(!riskEngine.validateOrder(order)) {
 
         std::cout
-            << "[GATEWAY] Risk rejected order "
-            << order.orderId
-            << "\n";
-
+        << "[GATEWAY] Accepted "
+        << (type == OrderType::MARKET ? "MARKET ": "LIMIT ")
+        << symbol
+        << " order "
+        << order.orderId
+        << "\n";
         return false;
     }
 
