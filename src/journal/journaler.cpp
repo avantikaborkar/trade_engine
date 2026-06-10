@@ -1,5 +1,6 @@
 #include "journal/journaler.h"
-
+#include "exchange/exchange.h"
+#include "utils/logger.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -129,8 +130,9 @@ void Journaler::loadSnapshot(
 
     if(!in.is_open()) {
 
-        std::cout
-            << "[SNAPSHOT] No snapshot found\n";
+        Logger::log(
+    "[SNAPSHOT] No snapshot found"
+);
 
         return;
     }
@@ -168,8 +170,9 @@ void Journaler::loadSnapshot(
             .addOrder(order);
     }
 
-    std::cout
-        << "[SNAPSHOT] Loaded\n";
+    Logger::log(
+    "[SNAPSHOT] Loaded"
+);
 }
 
 int Journaler::getHighestOrderId() {

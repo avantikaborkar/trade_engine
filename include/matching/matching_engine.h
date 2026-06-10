@@ -26,6 +26,16 @@ private:
 
     std::vector<Order> stopOrders;
 
+    std::atomic<uint64_t> ordersProcessed{0};
+
+    std::atomic<uint64_t> tradesExecuted{0};
+
+    std::atomic<uint64_t> totalLatencyMicros{0};
+
+    std::atomic<uint64_t> matchedOrders{0};
+
+    std::atomic<uint64_t> maxLatencyMicros{0};
+
     
 public:
 
@@ -35,10 +45,37 @@ public:
         SPSCQueue<TradeEvent>& tq
     );
 
+    uint64_t getOrdersProcessed() const {
+
+        return ordersProcessed.load();
+    }
+
+    uint64_t getTradesExecuted() const {
+
+        return tradesExecuted.load();
+    }
 
     void start();
 
     void stop();
+
+    double getAverageLatencyMicros() const {
+
+        uint64_t count =
+            matchedOrders.load();
+
+        if(count == 0) {
+
+            return 0.0;
+        }
+
+        return static_cast<double> (totalLatencyMicros.load()) / count;
+    }
+
+    uint64_t getMaxLatencyMicros() const {
+
+        return maxLatencyMicros.load();
+    }
 
 private:
 
@@ -57,5 +94,8 @@ private:
         OrderBook& book
     );
 
+    void recordLatency(
+        const Order& order
+    );
     void checkStopOrders(int tradePrice);
 };

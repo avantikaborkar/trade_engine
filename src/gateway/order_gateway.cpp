@@ -3,11 +3,11 @@
 #include <iostream>
 
 OrderGateway::OrderGateway(
-    ThreadSafeQueue<Order>& queue,
+    SymbolRouter& r,
     RiskEngine& risk,
     Journaler& journal
 )
-    : orderQueue(queue),
+    : router(r),
       riskEngine(risk),
       journaler(journal),
       nextOrderId(1) {}
@@ -91,7 +91,7 @@ bool OrderGateway::receiveBinaryOrder(
 
     journaler.logOrder(order);
 
-    orderQueue.push(order);
+    router.routeOrder(order);
 
     std::cout
         << "[GATEWAY] Accepted "

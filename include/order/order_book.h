@@ -1,5 +1,4 @@
 #pragma once
-
 #include "order.h"
 #include <vector>
 #include "memory/memory_pool.h"

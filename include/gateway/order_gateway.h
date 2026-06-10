@@ -1,7 +1,7 @@
 #pragma once
 
 #include "order/order.h"
-
+#include "router/symbol_router.h"
 #include "queue/thread_safe_queue.h"
 
 #include "risk/risk_engine.h"
@@ -12,7 +12,7 @@ class OrderGateway {
 
 private:
 
-    ThreadSafeQueue<Order>& orderQueue;
+    SymbolRouter& router;
 
     RiskEngine& riskEngine;
 
@@ -23,7 +23,7 @@ private:
 public:
 
     OrderGateway(
-        ThreadSafeQueue<Order>& queue,
+        SymbolRouter& r,
         RiskEngine& risk,
         Journaler& journal
     );

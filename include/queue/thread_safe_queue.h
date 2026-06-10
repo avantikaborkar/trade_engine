@@ -15,6 +15,8 @@ private:
 
     std::condition_variable cv;
 
+    bool stopped = false;
+
 public:
 
     void push(const T& item) {
@@ -34,8 +36,12 @@ public:
 
         cv.wait(lock, [this] {
 
-            return !queue.empty();
+            return !queue.empty() || stopped;
         });
+
+        if (stopped && queue.empty()) {
+            return false;
+        }
 
         item = queue.front();
 
@@ -49,5 +55,16 @@ public:
         std::lock_guard<std::mutex> lock(mutex);
 
         return queue.empty();
+    }
+
+    void stop() {
+
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+
+            stopped = true;
+        }
+
+        cv.notify_all();
     }
 };

@@ -1,5 +1,5 @@
 #include "network/tcp_server.h"
-
+#include "utils/logger.h"
 #include "network/binary_order_packet.h"
 
 #include <iostream>
@@ -88,10 +88,10 @@ void TCPServer::run() {
 
     listen(serverSocket, 10);
 
-    std::cout
-        << "[TCP] Multi-client server listening on port "
-        << port
-        << "\n";
+    Logger::log(
+        "[TCP] Multi-client server listening on port "
+        + std::to_string(port)
+    );
 
     while(running) {
 
@@ -114,8 +114,9 @@ void TCPServer::run() {
             continue;
         }
 
-        std::cout
-            << "[TCP] Client connected\n";
+        Logger::log(
+            "[TCP] Client connected"
+        );
 
         std::thread(
             &TCPServer::handleClient,
@@ -203,6 +204,7 @@ void TCPServer::handleClient(
     close(clientSocket);
 #endif
 
-    std::cout
-        << "[TCP] Client disconnected\n";
+    Logger::log(
+        "[TCP] Client disconnected"
+    );
 }

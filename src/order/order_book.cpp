@@ -1,5 +1,7 @@
 #include "order/order_book.h"
+#include "utils/logger.h"
 #include <iostream>
+#include <sstream>
 
 OrderBook::OrderBook()
     : buyLevels(MAX_PRICE + 1, nullptr),
@@ -120,23 +122,51 @@ void OrderBook::updateBestAsk() {
 
 void OrderBook::printBook() {
 
-    std::cout << "\n BUY \n";
-    for(int p = bestBid; p >= 0; --p) {
-        Order* cur = buyLevels[p];
-        while(cur) {
-            std::cout << cur->quantity << " @ " << p << "\n";
-            cur = cur->next;
+    std::ostringstream out;
+
+    out << "\nSELL:\n";
+
+    if(bestAsk != -1) {
+
+        for(int p = bestAsk; p <= MAX_PRICE; ++p) {
+
+            Order* cur = sellLevels[p];
+
+            while(cur) {
+
+                out
+                    << cur->quantity
+                    << " x "
+                    << p
+                    << "\n";
+
+                cur = cur->next;
+            }
         }
     }
 
-    std::cout << "\n SELL \n";
-    for(int p = bestAsk; p <= MAX_PRICE; ++p) {
-        Order* cur = sellLevels[p];
-        while(cur) {
-            std::cout << cur->quantity << " @ " << p << "\n";
-            cur = cur->next;
+    out << "\nBUY:\n";
+
+    if(bestBid != -1) {
+
+        for(int p = bestBid; p >= 0; --p) {
+
+            Order* cur = buyLevels[p];
+
+            while(cur) {
+
+                out
+                    << cur->quantity
+                    << " x "
+                    << p
+                    << "\n";
+
+                cur = cur->next;
+            }
         }
     }
+
+    Logger::log(out.str());
 }
 
 std::vector<Order> OrderBook::getAllOrders() const {

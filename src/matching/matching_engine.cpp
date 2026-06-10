@@ -1,8 +1,9 @@
 #include "matching/matching_engine.h"
-
+#include "utils/logger.h"
 #include <algorithm>
 #include <thread>
 #include <iostream>
+#include <cmath>
 
 MatchingEngine::MatchingEngine(
     Exchange& ex,
@@ -25,6 +26,8 @@ void MatchingEngine::start() {
 void MatchingEngine::stop() {
 
     running = false;
+
+    orderQueue.stop();
 }
 
 void MatchingEngine::matchLoop() {
@@ -33,7 +36,11 @@ void MatchingEngine::matchLoop() {
 
     while(running) {
 
-        orderQueue.pop(order);
+        if(!orderQueue.pop(order)) {
+
+            break;
+        }
+        ordersProcessed++;
 
         OrderBook& book =
             exchange.getBook(
@@ -44,10 +51,10 @@ void MatchingEngine::matchLoop() {
 
             stopOrders.push_back(order);
 
-            std::cout
-                << "[STOP] Registered order "
-                << order.orderId
-                << "\n";
+            Logger::log(
+                "[STOP] Registered order "
+                + std::to_string(order.orderId)
+            );
 
             continue;
         }
@@ -110,7 +117,8 @@ void MatchingEngine::matchLoop() {
             );
 
             tradeQueue.push(event);
-
+            tradesExecuted++;
+            recordLatency(order);
             buy->quantity -= quantity;
 
             sell->quantity -= quantity;
@@ -164,6 +172,8 @@ void MatchingEngine::processMarketOrder(
             );
 
             tradeQueue.push(event);
+            tradesExecuted++;
+            recordLatency(order);
             checkStopOrders(
                 event.price
             );
@@ -204,8 +214,13 @@ void MatchingEngine::processMarketOrder(
             );
 
             tradeQueue.push(event);
-            checkStopOrders(
-                event.price
+            tradesExecuted++;
+            recordLatency(order);
+            Logger::log(
+                "[MARKET] Executed trade for "
+                + std::to_string(event.quantity)
+                + " shares at price "
+                + std::to_string(event.price)
             );
             order.quantity -= quantity;
 
@@ -258,6 +273,8 @@ void MatchingEngine::processIOCOrder(
             );
 
             tradeQueue.push(event);
+            tradesExecuted++;
+            recordLatency(order);
             checkStopOrders(
                 event.price
             );
@@ -302,6 +319,8 @@ void MatchingEngine::processIOCOrder(
             );
 
             tradeQueue.push(event);
+            tradesExecuted++; 
+            recordLatency(order);  
             checkStopOrders(        
                 event.price
             );
@@ -320,16 +339,16 @@ void MatchingEngine::processIOCOrder(
 
     if(order.quantity > 0) {
 
-        std::cout
-            << "[IOC] Cancelled remaining "
-            << order.quantity
-            << " shares\n";
+        Logger::log(
+            "[IOC] Cancelled remaining "
+            + std::to_string(order.quantity)
+            + " shares"
+        );
     }
 }
 
 void MatchingEngine::processFOKOrder(
-    Order& order,
-    OrderBook& book
+    Order& order,    OrderBook& book
 ) {
 
     int available = 0;
@@ -385,10 +404,10 @@ void MatchingEngine::processFOKOrder(
 
     if(available < order.quantity) {
 
-        std::cout
-            << "[FOK] Cancelled order "
-            << order.orderId
-            << "\n";
+        Logger::log(
+            "[FOK] Cancelled order "
+            + std::to_string(order.orderId)
+        );
 
         return;
     }
@@ -427,10 +446,10 @@ void MatchingEngine::checkStopOrders(
 
         if(triggered) {
 
-            std::cout
-                << "[STOP] Triggered order "
-                << it->orderId
-                << "\n";
+            Logger::log(
+                "[STOP] Triggered order " +
+                std::to_string(it->orderId)
+            );
 
             Order marketOrder = *it;
 
@@ -453,5 +472,36 @@ void MatchingEngine::checkStopOrders(
 
             ++it;
         }
+    }
+}
+
+void MatchingEngine::recordLatency(
+    const Order& order
+) {
+
+    auto now =
+        std::chrono::steady_clock::now();
+
+    auto latency =
+        std::chrono::duration_cast<
+            std::chrono::microseconds
+        >(
+            now - order.createdTime
+        ).count();
+
+    totalLatencyMicros += latency;
+
+    matchedOrders++;
+
+    uint64_t currentMax =
+        maxLatencyMicros.load();
+
+    while(
+        latency > currentMax &&
+        !maxLatencyMicros.compare_exchange_weak(
+            currentMax,
+            latency
+        )
+    ) {
     }
 }

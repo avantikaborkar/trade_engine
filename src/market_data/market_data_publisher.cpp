@@ -1,5 +1,5 @@
 #include "market_data/market_data_publisher.h"
-
+#include "utils/logger.h"
 #include <iostream>
 #include <string>
 
@@ -85,10 +85,9 @@ void MarketDataPublisher::publishLoop() {
                 sizeof(clientAddr)
             );
 
-            std::cout
-                << "[UDP] "
-                << tradeMsg
-                << "\n";
+            Logger::log(
+                "[UDP] " + tradeMsg
+            );
         }
     }
 

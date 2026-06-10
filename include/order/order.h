@@ -1,5 +1,5 @@
 #pragma once
-
+#include <chrono>
 #include <string>
 
 enum class Side {
@@ -18,6 +18,8 @@ enum class OrderType {
 struct Order {
 
     int orderId;
+
+    std::chrono::steady_clock::time_point createdTime;
 
     std::string symbol;
 
@@ -39,7 +41,9 @@ struct Order {
       price(0),
       quantity(0),
       type(OrderType::LIMIT),
-      side(Side::BUY) {}
+      side(Side::BUY),
+      createdTime(std::chrono::steady_clock::now())
+        {}
 
     Order(
         int id,
@@ -54,5 +58,6 @@ struct Order {
         price(p),
         quantity(q),
         side(s),
-        type(t) {}
+        type(t),
+        createdTime(std::chrono::steady_clock::now()) {}
 };
