@@ -51,10 +51,10 @@ void MatchingEngine::matchLoop() {
 
             stopOrders.push_back(order);
 
-            Logger::log(
+          /*  Logger::log(
                 "[STOP] Registered order "
                 + std::to_string(order.orderId)
-            );
+            );*/
 
             continue;
         }
@@ -216,12 +216,12 @@ void MatchingEngine::processMarketOrder(
             tradeQueue.push(event);
             tradesExecuted++;
             recordLatency(order);
-            Logger::log(
+           /* Logger::log(
                 "[MARKET] Executed trade for "
                 + std::to_string(event.quantity)
                 + " shares at price "
                 + std::to_string(event.price)
-            );
+            ); */
             order.quantity -= quantity;
 
             buy->quantity -= quantity;
@@ -339,11 +339,11 @@ void MatchingEngine::processIOCOrder(
 
     if(order.quantity > 0) {
 
-        Logger::log(
+      /*  Logger::log(
             "[IOC] Cancelled remaining "
             + std::to_string(order.quantity)
             + " shares"
-        );
+        ); */
     }
 }
 
@@ -404,12 +404,12 @@ void MatchingEngine::processFOKOrder(
 
     if(available < order.quantity) {
 
-        Logger::log(
+       /* Logger::log(
             "[FOK] Cancelled order "
             + std::to_string(order.orderId)
-        );
+        );*/
 
-        return;
+        return; 
     }
 
     processIOCOrder(
@@ -446,10 +446,10 @@ void MatchingEngine::checkStopOrders(
 
         if(triggered) {
 
-            Logger::log(
+          /*  Logger::log(
                 "[STOP] Triggered order " +
                 std::to_string(it->orderId)
-            );
+            ); */
 
             Order marketOrder = *it;
 

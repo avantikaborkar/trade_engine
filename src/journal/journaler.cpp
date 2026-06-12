@@ -130,9 +130,9 @@ void Journaler::loadSnapshot(
 
     if(!in.is_open()) {
 
-        Logger::log(
+      /*  Logger::log(
     "[SNAPSHOT] No snapshot found"
-);
+); */
 
         return;
     }
@@ -170,9 +170,9 @@ void Journaler::loadSnapshot(
             .addOrder(order);
     }
 
-    Logger::log(
+    /* Logger::log(
     "[SNAPSHOT] Loaded"
-);
+); */
 }
 
 int Journaler::getHighestOrderId() {

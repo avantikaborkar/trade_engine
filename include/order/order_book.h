@@ -6,11 +6,16 @@
 
 class OrderBook {
 
+public:
+    struct PriceLevel {
+        Order* head = nullptr;
+        Order* tail = nullptr;
+    };
 private:
     static const int MAX_PRICE = 10000;
 
-    std::vector<Order*> buyLevels;
-    std::vector<Order*> sellLevels;
+    std::vector<PriceLevel> buyLevels;
+    std::vector<PriceLevel> sellLevels;
     std::unordered_map<int, Order*> orderMap;
     MemoryPool<Order> pool;
     int bestBid;

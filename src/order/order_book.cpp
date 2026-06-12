@@ -4,9 +4,9 @@
 #include <sstream>
 
 OrderBook::OrderBook()
-    : buyLevels(MAX_PRICE + 1, nullptr),
-      sellLevels(MAX_PRICE + 1, nullptr),
-      pool(10000),
+    : buyLevels(MAX_PRICE + 1),
+      sellLevels(MAX_PRICE + 1),
+      pool(2000000),
       bestBid(-1),
       bestAsk(-1) {}
 
@@ -14,37 +14,50 @@ void OrderBook::addOrder(const Order& order) {
 
     Order* newOrder = pool.allocate();
 
+        if(newOrder == nullptr)
+        {
+           /* Logger::log(
+                "[ORDERBOOK] Memory pool exhausted"
+            );*/
+            return;
+        }
+
     *newOrder = order;
     newOrder->next = nullptr;
     newOrder->prev = nullptr;
 
     if(order.side == Side::BUY) {
 
-        Order*& head = buyLevels[order.price];
+        PriceLevel& level = buyLevels[order.price];
 
-        if(!head) head = newOrder;
-        else {
-            Order* temp = head;
-            while(temp->next) temp = temp->next;
-            temp->next = newOrder;
-            newOrder->prev = temp;
-        }
+    if(!level.head)
+    {
+        level.head = level.tail = newOrder;
+    }
+    else
+    {
+        level.tail->next = newOrder;
+        newOrder->prev = level.tail;
+        level.tail = newOrder;
+    }
 
         if(order.price > bestBid)
             bestBid = order.price;
     }
     else {
 
-        Order*& head = sellLevels[order.price];
+        PriceLevel& level = sellLevels[order.price];
 
-        if(!head) head = newOrder;
-        else {
-            Order* temp = head;
-            while(temp->next) temp = temp->next;
-            temp->next = newOrder;
-            newOrder->prev = temp;
+        if(!level.head)
+        {
+            level.head = level.tail = newOrder;
         }
-
+        else
+        {
+            level.tail->next = newOrder;
+            newOrder->prev = level.tail;
+            level.tail = newOrder;
+        }
         if(bestAsk == -1 || order.price < bestAsk)
             bestAsk = order.price;
     }
@@ -62,25 +75,41 @@ void OrderBook::cancelOrder(int orderId) {
 
     if(order->side == Side::BUY) {
 
-        Order*& head = buyLevels[price];
+        PriceLevel& level = buyLevels[price];
 
-        if(order->prev) order->prev->next = order->next;
-        if(order->next) order->next->prev = order->prev;
+        if(order->prev)
+            order->prev->next = order->next;
 
-        if(head == order) head = order->next;
+        if(order->next)
+            order->next->prev = order->prev;
 
-        if(!head) updateBestBid();
+        if(level.head == order)
+            level.head = order->next;
+
+        if(level.tail == order)
+            level.tail = order->prev;
+
+        if(!level.head)
+            updateBestBid();
     }
     else {
 
-        Order*& head = sellLevels[price];
+       PriceLevel& level = sellLevels[price];
 
-        if(order->prev) order->prev->next = order->next;
-        if(order->next) order->next->prev = order->prev;
+        if(order->prev)
+            order->prev->next = order->next;
 
-        if(head == order) head = order->next;
+        if(order->next)
+            order->next->prev = order->prev;
 
-        if(!head) updateBestAsk();
+        if(level.head == order)
+            level.head = order->next;
+
+        if(level.tail == order)
+            level.tail = order->prev;
+
+        if(!level.head)
+            updateBestAsk();
     }
 
     pool.deallocate(order);
@@ -90,12 +119,18 @@ void OrderBook::cancelOrder(int orderId) {
 int OrderBook::getBestBid() const { return bestBid; }
 int OrderBook::getBestAsk() const { return bestAsk; }
 
-Order* OrderBook::getBuyHead(int price) { return buyLevels[price]; }
-Order* OrderBook::getSellHead(int price) { return sellLevels[price]; }
+Order* OrderBook::getBuyHead(int price)
+{
+    return buyLevels[price].head;
+}
+Order* OrderBook::getSellHead(int price)
+{
+    return sellLevels[price].head;
+}
 
 void OrderBook::updateBestBid() {
 
-    while(bestBid >= 0 && !buyLevels[bestBid])
+    while(bestBid >= 0 && buyLevels[bestBid].head == nullptr)
     {
         bestBid--;
     }
@@ -108,7 +143,7 @@ void OrderBook::updateBestBid() {
 
 void OrderBook::updateBestAsk() {
 
-    while(bestAsk <= MAX_PRICE && !sellLevels[bestAsk])
+    while(bestAsk <= MAX_PRICE && sellLevels[bestAsk].head == nullptr)
     {
         bestAsk++;
     }
@@ -130,7 +165,7 @@ void OrderBook::printBook() {
 
         for(int p = bestAsk; p <= MAX_PRICE; ++p) {
 
-            Order* cur = sellLevels[p];
+            Order* cur = sellLevels[p].head;
 
             while(cur) {
 
@@ -151,7 +186,7 @@ void OrderBook::printBook() {
 
         for(int p = bestBid; p >= 0; --p) {
 
-            Order* cur = buyLevels[p];
+            Order* cur = buyLevels[p].head;
 
             while(cur) {
 
@@ -175,7 +210,7 @@ std::vector<Order> OrderBook::getAllOrders() const {
 
     for(int price = 0; price <= MAX_PRICE; ++price) {
 
-        Order* cur = buyLevels[price];
+        Order* cur = buyLevels[price].head;
 
         while(cur) {
 
@@ -187,7 +222,7 @@ std::vector<Order> OrderBook::getAllOrders() const {
 
     for(int price = 0; price <= MAX_PRICE; ++price) {
 
-        Order* cur = sellLevels[price];
+        Order* cur = sellLevels[price].head;
 
         while(cur) {
 
@@ -206,12 +241,14 @@ void OrderBook::clear() {
 
     for(auto& level : buyLevels) {
 
-        level = nullptr;
+        level.head = nullptr;
+        level.tail = nullptr;       
     }
 
     for(auto& level : sellLevels) {
 
-        level = nullptr;
+        level.head = nullptr;
+        level.tail = nullptr;       
     }
 
     bestBid = -1;

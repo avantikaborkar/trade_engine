@@ -15,24 +15,41 @@ size_t SymbolRouter::getShard(
     const std::string& symbol
 ) const {
 
-    return std::hash<std::string>{}(symbol)
-        % queues.size();
+    if(symbol == "AAPL") return 0;
+    if(symbol == "MSFT") return 1;
+    if(symbol == "GOOG") return 2;
+    if(symbol == "AMZN") return 3;
+
+    if(symbol == "META") return 0;
+    if(symbol == "TSLA") return 1;
+    if(symbol == "NVDA") return 2;
+
+    return 0;
 }
 
 void SymbolRouter::routeOrder(
     const Order& order
 ) {
 
-    symbolCounts[order.symbol]++;
+    auto it = symbolCounts.find(order.symbol);
+
+    if(it != symbolCounts.end())
+    {
+        it->second++;
+    }
+    else
+    {
+        symbolCounts.emplace(order.symbol, 1);
+}
     size_t shard =
         getShard(order.symbol);
 
-    std::cout
+   /* std::cout
         << "[ROUTER] "
         << order.symbol
         << " -> shard "
         << shard
-        << "\n";
+        << "\n"; */
 
     queues[shard]->push(order);
 }

@@ -88,7 +88,7 @@ void TCPServer::run() {
 
     listen(serverSocket, 10);
 
-    Logger::log(
+   Logger::log(
         "[TCP] Multi-client server listening on port "
         + std::to_string(port)
     );
@@ -114,9 +114,10 @@ void TCPServer::run() {
             continue;
         }
 
-        Logger::log(
+       Logger::log(
             "[TCP] Client connected"
         );
+        
 
         std::thread(
             &TCPServer::handleClient,
@@ -175,19 +176,19 @@ void TCPServer::handleClient(
             break;
         }
 
-        std::cout
-        << "[TCP] Binary Order -> "
-        << "symbol="
-        << packet.symbol
-        << " side="
-        << (int)packet.side
-        << " type="
-        << (int)packet.orderType
-        << " price="
-        << packet.price
-        << " qty="
-        << packet.quantity
-        << "\n";
+       /* Logger::log(
+            "[TCP] Binary Order -> symbol="
+            + std::string(packet.symbol)
+            + " side="
+            + std::to_string(packet.side)
+            + " type="
+            + std::to_string(packet.orderType)
+            + " price="
+            + std::to_string(packet.price)
+            + " qty="
+            + std::to_string(packet.quantity)
+        );
+        */
 
         gateway.receiveBinaryOrder(
             std::string(packet.symbol),
@@ -204,7 +205,7 @@ void TCPServer::handleClient(
     close(clientSocket);
 #endif
 
-    Logger::log(
+  Logger::log(
         "[TCP] Client disconnected"
     );
 }

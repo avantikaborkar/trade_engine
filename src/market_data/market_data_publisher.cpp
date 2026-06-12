@@ -85,9 +85,10 @@ void MarketDataPublisher::publishLoop() {
                 sizeof(clientAddr)
             );
 
-            Logger::log(
+          /*  Logger::log(
                 "[UDP] " + tradeMsg
             );
+            */
         }
     }
 

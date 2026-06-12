@@ -79,13 +79,14 @@ bool OrderGateway::receiveBinaryOrder(
 
     if(!riskEngine.validateOrder(order)) {
 
-        std::cout
+       /* std::cout
         << "[GATEWAY] Accepted "
         << (type == OrderType::MARKET ? "MARKET ": "LIMIT ")
         << symbol
         << " order "
         << order.orderId
         << "\n";
+        */
         return false;
     }
 
@@ -93,12 +94,12 @@ bool OrderGateway::receiveBinaryOrder(
 
     router.routeOrder(order);
 
-    std::cout
+   /* std::cout
         << "[GATEWAY] Accepted "
         << symbol
         << " order "
         << order.orderId
-        << "\n";
+        << "\n"; */
 
     return true;
 }
