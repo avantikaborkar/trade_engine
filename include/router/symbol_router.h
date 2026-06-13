@@ -1,8 +1,9 @@
 #pragma once
 
 #include "order/order.h"
-#include "queue/thread_safe_queue.h"
-#include<unordered_map>
+#include "queue/spsc_queue.h"
+
+#include <unordered_map>
 #include <vector>
 #include <memory>
 #include <string>
@@ -13,7 +14,7 @@ private:
 
     std::vector<
         std::shared_ptr<
-            ThreadSafeQueue<Order>
+            SPSCQueue<Order>
         >
     > queues;
 
@@ -27,7 +28,7 @@ public:
     SymbolRouter(
         const std::vector<
             std::shared_ptr<
-                ThreadSafeQueue<Order>
+                SPSCQueue<Order>
             >
         >& q
     );

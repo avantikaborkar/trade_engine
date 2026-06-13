@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "queue/spsc_queue.h"
-#include "queue/thread_safe_queue.h"
+
 #include <thread>
 #include <chrono>
 #include <iostream>
@@ -29,31 +29,31 @@ int main() {
 
     Exchange exchange;
 
-    ThreadSafeQueue<Order> orderQueue0;
-    ThreadSafeQueue<Order> orderQueue1;
-    ThreadSafeQueue<Order> orderQueue2;
-    ThreadSafeQueue<Order> orderQueue3;
+    SPSCQueue<Order> orderQueue0(100000);
+    SPSCQueue<Order> orderQueue1(100000);
+    SPSCQueue<Order> orderQueue2(100000);
+    SPSCQueue<Order> orderQueue3(100000);
 
     std::vector<
     std::shared_ptr<
-        ThreadSafeQueue<Order>
+        SPSCQueue<Order>
     >
         > queues {
 
             std::shared_ptr<
-                ThreadSafeQueue<Order>
+                SPSCQueue<Order>
             >(&orderQueue0, [](auto*) {}),
 
             std::shared_ptr<
-                ThreadSafeQueue<Order>
+                SPSCQueue<Order>
             >(&orderQueue1, [](auto*) {}),
 
             std::shared_ptr<
-                ThreadSafeQueue<Order>
+                SPSCQueue<Order>
             >(&orderQueue2, [](auto*) {}),
 
             std::shared_ptr<
-                ThreadSafeQueue<Order>
+                SPSCQueue<Order>
             >(&orderQueue3, [](auto*) {})
         };
 
@@ -140,6 +140,32 @@ int main() {
 
         while(std::cin >> cmd) {    
             
+            if(cmd == 'h' || cmd == 'H') {
+
+                std::cout
+                    << "\n=== AVAILABLE COMMANDS ===\n";
+
+                std::cout
+                    << "h           - Help\n";
+
+                std::cout
+                    << "m           - Engine Metrics\n";
+
+                std::cout
+                    << "l           - Latency Metrics\n";
+
+                std::cout
+                    << "r           - Router Metrics\n";
+
+                std::cout
+                    << "b <symbol>  - Print Order Book\n";
+
+                std::cout
+                    << "q           - Save Snapshot & Quit\n";
+
+                continue;
+            }
+
             if(cmd == 'm' || cmd == 'M') {
 
                 std::cout
@@ -172,10 +198,75 @@ int main() {
                     << " Trades: "
                     << engine3.getTradesExecuted()
                     << "\n";
+                    std::cout
+                    << "\n=== QUEUE METRICS ===\n";
 
+                std::cout
+                    << "Q0 Current: "
+                    << orderQueue0.getCurrentDepth()
+                    << " Peak: "
+                    << orderQueue0.getPeakDepth()
+                    << "\n";
+
+                std::cout
+                    << "Q1 Current: "
+                    << orderQueue1.getCurrentDepth()
+                    << " Peak: "
+                    << orderQueue1.getPeakDepth()
+                    << "\n";
+
+                std::cout
+                    << "Q2 Current: "
+                    << orderQueue2.getCurrentDepth()
+                    << " Peak: "
+                    << orderQueue2.getPeakDepth()
+                    << "\n";
+
+                std::cout
+                    << "Q3 Current: "
+                    << orderQueue3.getCurrentDepth()
+                    << " Peak: "
+                    << orderQueue3.getPeakDepth()
+                    << "\n";
+
+                uint64_t totalOrders =
+                    engine0.getOrdersProcessed()
+                    + engine1.getOrdersProcessed()
+                    + engine2.getOrdersProcessed()
+                    + engine3.getOrdersProcessed();
+
+                std::cout
+                    << "\n=== ENGINE UTILIZATION ===\n";
+
+                std::cout
+                    << "Engine0: "
+                    << (100.0 *
+                        engine0.getOrdersProcessed()
+                        / totalOrders)
+                    << "%\n";
+
+                std::cout
+                    << "Engine1: "
+                    << (100.0 *
+                        engine1.getOrdersProcessed()
+                        / totalOrders)
+                    << "%\n";
+
+                std::cout
+                    << "Engine2: "
+                    << (100.0 *
+                        engine2.getOrdersProcessed()
+                        / totalOrders)
+                    << "%\n";
+
+                std::cout
+                    << "Engine3: "
+                    << (100.0 *
+                        engine3.getOrdersProcessed()
+                        / totalOrders)
+                    << "%\n";
                 continue;
             }
-
             if(cmd == 'r' || cmd == 'R') {
 
                 std::cout

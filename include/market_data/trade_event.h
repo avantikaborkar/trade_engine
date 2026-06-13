@@ -10,12 +10,20 @@ struct TradeEvent {
 
     int quantity;
 
+    int bestBid;
+
+    int bestAsk;
+
     TradeEvent(
         const std::string& sym = "",
         int p = 0,
-        int q = 0
+        int q = 0,
+        int bid = -1,
+        int ask = -1
     )
         : symbol(sym),
           price(p),
-          quantity(q) {}
+          quantity(q),
+          bestBid(bid),
+          bestAsk(ask) {}
 };

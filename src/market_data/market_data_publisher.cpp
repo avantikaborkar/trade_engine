@@ -74,8 +74,11 @@ void MarketDataPublisher::publishLoop() {
                 " TRADE " +
                 std::to_string(event.quantity) +
                 " @ " +
-                std::to_string(event.price);
-
+                std::to_string(event.price) +
+                " BID=" +
+                std::to_string(event.bestBid) +
+                " ASK=" +
+                std::to_string(event.bestAsk);
             sendto(
                 sock,
                 tradeMsg.c_str(),
@@ -84,7 +87,7 @@ void MarketDataPublisher::publishLoop() {
                 (sockaddr*)&clientAddr,
                 sizeof(clientAddr)
             );
-
+            
           /*  Logger::log(
                 "[UDP] " + tradeMsg
             );

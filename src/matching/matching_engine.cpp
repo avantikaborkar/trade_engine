@@ -7,7 +7,7 @@
 
 MatchingEngine::MatchingEngine(
     Exchange& ex,
-    ThreadSafeQueue<Order>& oq,
+    SPSCQueue<Order>& oq,
     SPSCQueue<TradeEvent>& tq
 )
     : exchange(ex),
@@ -27,7 +27,6 @@ void MatchingEngine::stop() {
 
     running = false;
 
-    orderQueue.stop();
 }
 
 void MatchingEngine::matchLoop() {
@@ -38,8 +37,11 @@ void MatchingEngine::matchLoop() {
 
         if(!orderQueue.pop(order)) {
 
-            break;
+            std::this_thread::yield();
+
+            continue;
         }
+
         ordersProcessed++;
 
         OrderBook& book =
@@ -51,13 +53,9 @@ void MatchingEngine::matchLoop() {
 
             stopOrders.push_back(order);
 
-          /*  Logger::log(
-                "[STOP] Registered order "
-                + std::to_string(order.orderId)
-            );*/
-
             continue;
         }
+
         if(order.type == OrderType::MARKET) {
 
             processMarketOrder(
@@ -67,6 +65,7 @@ void MatchingEngine::matchLoop() {
 
             continue;
         }
+
         if(order.type == OrderType::IOC) {
 
             processIOCOrder(
@@ -76,6 +75,7 @@ void MatchingEngine::matchLoop() {
 
             continue;
         }
+
         if(order.type == OrderType::FOK) {
 
             processFOKOrder(
@@ -94,9 +94,11 @@ void MatchingEngine::matchLoop() {
             book.getBestBid() >= book.getBestAsk()
         ) {
 
-            int bid = book.getBestBid();
+            int bid =
+                book.getBestBid();
 
-            int ask = book.getBestAsk();
+            int ask =
+                book.getBestAsk();
 
             Order* buy =
                 book.getBuyHead(bid);
@@ -113,12 +115,16 @@ void MatchingEngine::matchLoop() {
             TradeEvent event(
                 order.symbol,
                 ask,
-                quantity
+                quantity,
+                book.getBestBid(),
+                book.getBestAsk()
             );
-
             tradeQueue.push(event);
+
             tradesExecuted++;
+
             recordLatency(order);
+
             buy->quantity -= quantity;
 
             sell->quantity -= quantity;

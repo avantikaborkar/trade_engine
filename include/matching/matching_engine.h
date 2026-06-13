@@ -2,8 +2,6 @@
 
 #include "exchange/exchange.h"
 
-#include "queue/thread_safe_queue.h"
-
 #include "queue/spsc_queue.h"
 
 #include "market_data/trade_event.h"
@@ -18,7 +16,7 @@ private:
 
     Exchange& exchange;
 
-    ThreadSafeQueue<Order>& orderQueue;
+    SPSCQueue<Order>& orderQueue;
 
     SPSCQueue<TradeEvent>& tradeQueue;
 
@@ -36,12 +34,11 @@ private:
 
     std::atomic<uint64_t> maxLatencyMicros{0};
 
-    
 public:
 
     MatchingEngine(
         Exchange& ex,
-        ThreadSafeQueue<Order>& oq,
+        SPSCQueue<Order>& oq,
         SPSCQueue<TradeEvent>& tq
     );
 
@@ -69,7 +66,9 @@ public:
             return 0.0;
         }
 
-        return static_cast<double> (totalLatencyMicros.load()) / count;
+        return static_cast<double>(
+            totalLatencyMicros.load()
+        ) / count;
     }
 
     uint64_t getMaxLatencyMicros() const {
@@ -85,10 +84,12 @@ private:
         Order& order,
         OrderBook& book
     );
+
     void processIOCOrder(
         Order& order,
         OrderBook& book
     );
+
     void processFOKOrder(
         Order& order,
         OrderBook& book
@@ -97,5 +98,8 @@ private:
     void recordLatency(
         const Order& order
     );
-    void checkStopOrders(int tradePrice);
+
+    void checkStopOrders(
+        int tradePrice
+    );
 };

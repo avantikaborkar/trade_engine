@@ -1,74 +1,118 @@
 #include "journal/journaler.h"
-#include "exchange/exchange.h"
-#include "utils/logger.h"
+
 #include <fstream>
-#include <iostream>
 #include <sstream>
+#include <iostream>
 
 Journaler::Journaler(
     const std::string& file
 )
-    : filename(file) {}
+    : filename(file),
+      running(true)
+{
+    writerThread = std::thread(
+        &Journaler::writerLoop,
+        this
+    );
+}
 
-void Journaler::logOrder(
-    const Order& order
-) {
+Journaler::~Journaler()
+{
+    running = false;
 
+    queue.stop();
+
+    if(writerThread.joinable())
+    {
+        writerThread.join();
+    }
+}
+
+void Journaler::writerLoop()
+{
     std::ofstream out(
         filename,
         std::ios::app
     );
 
-    if(!out.is_open()) {
-
+    if(!out.is_open())
+    {
         std::cout
             << "NOTE: Failed to open log file\n";
 
         return;
     }
 
-    out
+    JournalEntry entry;
+
+    while(queue.pop(entry))
+    {
+        out << entry.line;
+    }
+
+    out.flush();
+}
+
+void Journaler::logOrder(
+    const Order& order
+)
+{
+    std::ostringstream ss;
+
+    ss
         << order.orderId << " "
+        << order.symbol << " "
         << (order.side == Side::BUY ? "BUY" : "SELL")
         << " "
         << order.price << " "
         << order.quantity
         << "\n";
+
+    queue.push(
+        JournalEntry(
+            ss.str()
+        )
+    );
 }
 
 void Journaler::replayOrders(
     OrderBook& book
-) {
-
+)
+{
     std::ifstream in(filename);
 
-    if(!in.is_open()) {
-
-        std::cout<< "NOTE: No previous log found\n";
-
+    if(!in.is_open())
+    {
         return;
     }
 
-    std::cout<< "\nReplaying Orders:\n";
+    int id;
+    std::string symbol;
+    std::string sideStr;
+    int price;
+    int qty;
 
-    std::string line;
+    while(
+        in
+        >> id
+        >> symbol
+        >> sideStr
+        >> price
+        >> qty
+    )
+    {
+        Side side =
+            (sideStr == "BUY")
+            ? Side::BUY
+            : Side::SELL;
 
-    while(std::getline(in, line)) {
-
-        std::cout<< line<< "\n";
-
-        std::stringstream ss(line);
-
-        int id;
-        std::string sideStr;
-        int price;
-        int qty;
-
-        ss>> id>> sideStr>> price>> qty;
-
-        Side side =(sideStr == "BUY")? Side::BUY: Side::SELL;
-
-        Order order(id,"AAPL", price, qty, side);
+        Order order(
+            id,
+            symbol,
+            price,
+            qty,
+            side
+        );
 
         book.addOrder(order);
     }
@@ -76,22 +120,22 @@ void Journaler::replayOrders(
 
 void Journaler::saveSnapshot(
     Exchange& exchange
-) {
-
+)
+{
     std::ofstream out(
         "data/snapshot.dat"
     );
 
-    if(!out.is_open()) {
-
+    if(!out.is_open())
+    {
         return;
     }
 
     const auto& books =
         exchange.getAllBooks();
 
-    for(const auto& pair : books) {
-
+    for(const auto& pair : books)
+    {
         const std::string& symbol =
             pair.first;
 
@@ -101,8 +145,8 @@ void Journaler::saveSnapshot(
         auto orders =
             book.getAllOrders();
 
-        for(const auto& order : orders) {
-
+        for(const auto& order : orders)
+        {
             out
                 << order.orderId << " "
                 << symbol << " "
@@ -122,18 +166,14 @@ void Journaler::saveSnapshot(
 
 void Journaler::loadSnapshot(
     Exchange& exchange
-) {
-
+)
+{
     std::ifstream in(
         "data/snapshot.dat"
     );
 
-    if(!in.is_open()) {
-
-      /*  Logger::log(
-    "[SNAPSHOT] No snapshot found"
-); */
-
+    if(!in.is_open())
+    {
         return;
     }
 
@@ -150,8 +190,8 @@ void Journaler::loadSnapshot(
         >> sideStr
         >> price
         >> qty
-    ) {
-
+    )
+    {
         Side side =
             (sideStr == "BUY")
             ? Side::BUY
@@ -169,17 +209,16 @@ void Journaler::loadSnapshot(
             .getBook(symbol)
             .addOrder(order);
     }
-
-    /* Logger::log(
-    "[SNAPSHOT] Loaded"
-); */
 }
 
-int Journaler::getHighestOrderId() {
+int Journaler::getHighestOrderId()
+{
+    std::ifstream in(
+        "data/snapshot.dat"
+    );
 
-    std::ifstream in("data/snapshot.dat");
-
-    if(!in.is_open()) {
+    if(!in.is_open())
+    {
         return 0;
     }
 
@@ -198,9 +237,10 @@ int Journaler::getHighestOrderId() {
         >> sideStr
         >> price
         >> qty
-    ) {
-
-        if(id > maxId) {
+    )
+    {
+        if(id > maxId)
+        {
             maxId = id;
         }
     }

@@ -1,11 +1,12 @@
 #include "router/symbol_router.h"
+
 #include <iostream>
 #include <functional>
 
 SymbolRouter::SymbolRouter(
     const std::vector<
         std::shared_ptr<
-            ThreadSafeQueue<Order>
+            SPSCQueue<Order>
         >
     >& q
 )
@@ -40,7 +41,8 @@ void SymbolRouter::routeOrder(
     else
     {
         symbolCounts.emplace(order.symbol, 1);
-}
+    }
+
     size_t shard =
         getShard(order.symbol);
 
